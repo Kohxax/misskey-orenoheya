@@ -8,8 +8,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 	ref="buttonEl"
 	v-ripple="canToggle"
 	class="_button"
-	:class="[$style.root, { [$style.reacted]: myReaction == reaction, [$style.canToggle]: canToggle, [$style.small]: prefer.s.reactionsDisplaySize === 'small', [$style.large]: prefer.s.reactionsDisplaySize === 'large' }]"
-	@click="toggleReaction()"
+	:class="[$style.root, { [$style.reacted]: myReaction == reaction, [$style.canToggle]: (canToggle || alternative), [$style.small]: prefer.s.reactionsDisplaySize === 'small', [$style.large]: prefer.s.reactionsDisplaySize === 'large' }]"
+	@click="toggleReaction"
 	@contextmenu.prevent.stop="menu"
 >
 	<MkReactionIcon style="pointer-events: none;" :class="prefer.s.limitWidthOfReaction ? $style.limitWidth : ''" :reaction="reaction" :emojiUrl="reactionEmojis[reaction.substring(1, reaction.length - 1)]"/>
@@ -22,6 +22,7 @@ import { computed, inject, onMounted, useTemplateRef, watch } from 'vue';
 import * as Misskey from 'misskey-js';
 import { getUnicodeEmojiOrNull } from '@@/js/emojilist.js';
 import MkCustomEmojiDetailedDialog from './MkCustomEmojiDetailedDialog.vue';
+import type { ComputedRef } from 'vue';
 import type { MenuItem } from '@/types/menu';
 import XDetails from '@/components/MkReactionsViewer.details.vue';
 import MkReactionIcon from '@/components/MkReactionIcon.vue';
@@ -33,7 +34,7 @@ import MkReactionEffect from '@/components/MkReactionEffect.vue';
 import { i18n } from '@/i18n.js';
 import * as sound from '@/utility/sound.js';
 import { checkReactionPermissions } from '@/utility/check-reaction-permissions.js';
-import { customEmojisMap } from '@/custom-emojis.js';
+import { customEmojisMap, customEmojis } from '@/custom-emojis.js';
 import { prefer } from '@/preferences.js';
 import { DI } from '@/di.js';
 import { noteEvents } from '@/composables/use-note-capture.js';
@@ -59,6 +60,13 @@ const buttonEl = useTemplateRef('buttonEl');
 
 const emojiName = computed(() => props.reaction.replace(/:/g, '').replace(/@\./, ''));
 
+const reactionName = computed(() => {
+	const r = props.reaction.replace(':', '');
+	return r.slice(0, r.indexOf('@'));
+});
+
+const alternative: ComputedRef<string | null> = computed(() => customEmojis.value.find(it => it.name === reactionName.value)?.name ?? null);
+
 const canToggle = computed(() => {
 	const emoji = customEmojisMap.get(emojiName.value) ?? getUnicodeEmojiOrNull(props.reaction);
 
@@ -69,8 +77,50 @@ const canToggle = computed(() => {
 const canGetInfo = computed(() => !props.reaction.match(/@\w/) && props.reaction.includes(':'));
 const isLocalCustomEmoji = props.reaction[0] === ':' && props.reaction.includes('@.');
 
-async function toggleReaction() {
-	if (!canToggle.value) return;
+async function chooseAlternative(ev) {
+	if (!alternative.value) return;
+	if ($i == null) return;
+
+	const me = $i;
+
+	if (prefer.s.confirmOnReact) {
+		const confirm = await os.confirm({
+			type: 'question',
+			text: i18n.tsx.reactAreYouSure({ emoji: `:${alternative.value}:` }),
+		});
+
+		if (confirm.canceled) return;
+	}
+
+	sound.playMisskeySfx('reaction');
+	haptic();
+
+	if (mock) {
+		emit('reactionToggled', `:${alternative.value}:`, (props.count + 1));
+		return;
+	}
+
+	misskeyApi('notes/reactions/create', {
+		noteId: props.noteId,
+		reaction: `:${alternative.value}:`,
+	}).then(() => {
+		if (!alternative.value) return;
+		const emoji = customEmojisMap.get(alternative.value);
+		if (emoji == null) return;
+
+		noteEvents.emit(`reacted:${props.noteId}`, {
+			userId: me.id,
+			reaction: `:${alternative.value}:`,
+			emoji: emoji,
+		});
+	});
+}
+
+async function toggleReaction(ev) {
+	if (!canToggle.value) {
+		chooseAlternative(ev);
+		return;
+	}
 	if ($i == null) return;
 
 	const me = $i;
