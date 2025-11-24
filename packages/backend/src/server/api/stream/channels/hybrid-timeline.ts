@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Packed } from '@/misc/json-schema.js';
 import { MetaService } from '@/core/MetaService.js';
+import type { Config } from '@/config.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
 import { isRenotePacked, isQuotePacked } from '@/misc/is-renote.js';
 import type { JsonObject } from '@/misc/json-value.js';
@@ -21,9 +23,11 @@ class HybridTimelineChannel extends Channel {
 	private withRenotes: boolean;
 	private withReplies: boolean;
 	private withFiles: boolean;
+	private config: Config;
 
 	constructor(
 		private metaService: MetaService,
+		config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
 
@@ -31,6 +35,7 @@ class HybridTimelineChannel extends Channel {
 		connection: Channel['connection'],
 	) {
 		super(id, connection);
+		this.config = config;
 		//this.onNote = this.onNote.bind(this);
 	}
 
@@ -38,6 +43,7 @@ class HybridTimelineChannel extends Channel {
 	public async init(params: JsonObject): Promise<void> {
 		const policies = await this.roleService.getUserPolicies(this.user ? this.user.id : null);
 		if (!policies.ltlAvailable) return;
+		if (this.config.disableSocialTimeline) return;
 
 		this.withRenotes = !!(params.withRenotes ?? true);
 		this.withReplies = !!(params.withReplies ?? false);
@@ -127,6 +133,8 @@ export class HybridTimelineChannelService implements MiChannelService<true> {
 
 	constructor(
 		private metaService: MetaService,
+		@Inject(DI.config)
+		private config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
 	) {
@@ -136,6 +144,7 @@ export class HybridTimelineChannelService implements MiChannelService<true> {
 	public create(id: string, connection: Channel['connection']): HybridTimelineChannel {
 		return new HybridTimelineChannel(
 			this.metaService,
+			this.config,
 			this.roleService,
 			this.noteEntityService,
 			id,

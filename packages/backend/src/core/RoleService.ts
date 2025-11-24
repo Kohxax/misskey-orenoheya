@@ -15,6 +15,7 @@ import type {
 	RolesRepository,
 	UsersRepository,
 } from '@/models/_.js';
+import type { Config } from '@/config.js';
 import { MemoryKVCache, MemorySingleCache } from '@/misc/cache.js';
 import type { MiUser } from '@/models/User.js';
 import { DI } from '@/di-symbols.js';
@@ -134,6 +135,9 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 
 		@Inject(DI.meta)
 		private meta: MiMeta,
+
+		@Inject(DI.config)
+		private config: Config,
 
 		@Inject(DI.redisForTimelines)
 		private redisForTimelines: Redis.Redis,
@@ -397,7 +401,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 
 		return {
 			gtlAvailable: calc('gtlAvailable', vs => vs.some(v => v === true)),
-			ltlAvailable: calc('ltlAvailable', vs => vs.some(v => v === true)),
+			ltlAvailable: this.config.disableLocalTimeline ? false : calc('ltlAvailable', vs => vs.some(v => v === true)),
 			canPublicNote: calc('canPublicNote', vs => vs.some(v => v === true)),
 			mentionLimit: calc('mentionLimit', vs => Math.max(...vs)),
 			canInvite: calc('canInvite', vs => vs.some(v => v === true)),

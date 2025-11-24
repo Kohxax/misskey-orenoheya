@@ -31,6 +31,8 @@ type Source = {
 	trustProxy?: FastifyServerOptions['trustProxy'];
 	chmodSocket?: string;
 	disableHsts?: boolean;
+	disableLocalTimeline?: boolean;
+	disableSocialTimeline?: boolean;
 	db: {
 		host: string;
 		port: number;
@@ -123,6 +125,8 @@ export type Config = {
 	trustProxy: FastifyServerOptions['trustProxy'];
 	chmodSocket: string | undefined;
 	disableHsts: boolean | undefined;
+	disableLocalTimeline: boolean;
+	disableSocialTimeline: boolean;
 	db: {
 		host: string;
 		port: number;
@@ -272,6 +276,8 @@ export function loadConfig(): Config {
 		trustProxy: config.trustProxy,
 		chmodSocket: config.chmodSocket,
 		disableHsts: config.disableHsts,
+		disableLocalTimeline: config.disableLocalTimeline ?? false,
+		disableSocialTimeline: config.disableSocialTimeline ?? false,
 		host,
 		hostname,
 		scheme,

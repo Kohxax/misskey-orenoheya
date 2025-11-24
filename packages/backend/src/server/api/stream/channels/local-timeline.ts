@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Packed } from '@/misc/json-schema.js';
 import { MetaService } from '@/core/MetaService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
+import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import { RoleService } from '@/core/RoleService.js';
 import { isQuotePacked, isRenotePacked } from '@/misc/is-renote.js';
 import type { JsonObject } from '@/misc/json-value.js';
@@ -20,9 +22,11 @@ class LocalTimelineChannel extends Channel {
 	private withRenotes: boolean;
 	private withReplies: boolean;
 	private withFiles: boolean;
+	private config: Config;
 
 	constructor(
 		private metaService: MetaService,
+		config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
 
@@ -30,6 +34,7 @@ class LocalTimelineChannel extends Channel {
 		connection: Channel['connection'],
 	) {
 		super(id, connection);
+		this.config = config;
 		//this.onNote = this.onNote.bind(this);
 	}
 
@@ -37,6 +42,7 @@ class LocalTimelineChannel extends Channel {
 	public async init(params: JsonObject) {
 		const policies = await this.roleService.getUserPolicies(this.user ? this.user.id : null);
 		if (!policies.ltlAvailable) return;
+		if (this.config.disableLocalTimeline) return;
 
 		this.withRenotes = !!(params.withRenotes ?? true);
 		this.withReplies = !!(params.withReplies ?? false);
@@ -93,6 +99,8 @@ export class LocalTimelineChannelService implements MiChannelService<false> {
 
 	constructor(
 		private metaService: MetaService,
+		@Inject(DI.config)
+		private config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
 	) {
@@ -102,6 +110,7 @@ export class LocalTimelineChannelService implements MiChannelService<false> {
 	public create(id: string, connection: Channel['connection']): LocalTimelineChannel {
 		return new LocalTimelineChannel(
 			this.metaService,
+			this.config,
 			this.roleService,
 			this.noteEntityService,
 			id,

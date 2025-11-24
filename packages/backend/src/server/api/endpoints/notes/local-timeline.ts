@@ -6,6 +6,7 @@
 import { Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import type { MiMeta, NotesRepository } from '@/models/_.js';
+import type { Config } from '@/config.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
@@ -68,6 +69,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.meta)
 		private serverSettings: MiMeta,
 
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
 
@@ -85,6 +89,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const policies = await this.roleService.getUserPolicies(me ? me.id : null);
 			if (!policies.ltlAvailable) {
+				throw new ApiError(meta.errors.ltlDisabled);
+			}
+
+			if (this.config.disableLocalTimeline) {
 				throw new ApiError(meta.errors.ltlDisabled);
 			}
 
