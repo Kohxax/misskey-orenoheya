@@ -1,10 +1,10 @@
 {
 	"name": "misskey",
-	"version": "2025.11.0",
-	"codename": "nasubi",
+	"version": "2025.11.0-orenoheya-1.0",
+	"codename": "Bokukoha",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/misskey-dev/misskey.git"
+		"url": "https://github.com/Kohxax/misskey-orenoheya.git"
 	},
 	"packageManager": "pnpm@10.20.0",
 	"workspaces": [
