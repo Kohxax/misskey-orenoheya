@@ -274,16 +274,6 @@ const headerTabs = computed(() => [...(prefer.r.pinnedUserLists.value.map(l => (
 	icon: basicTimelineIconClass(tl),
 	iconOnly: true,
 })), {
-	icon: 'ti ti-list',
-	title: i18n.ts.lists,
-	iconOnly: true,
-	onClick: chooseList,
-}, {
-	icon: 'ti ti-antenna',
-	title: i18n.ts.antennas,
-	iconOnly: true,
-	onClick: chooseAntenna,
-}, {
 	icon: 'ti ti-device-tv',
 	title: i18n.ts.channel,
 	iconOnly: true,
