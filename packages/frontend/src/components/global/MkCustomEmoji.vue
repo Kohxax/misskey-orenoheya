@@ -129,6 +129,19 @@ function onClick(ev: MouseEvent) {
 					react(`:${props.name}:`);
 				},
 			});
+
+			if (!isLocal.value) {
+				const alternative = customEmojisMap.get(customEmojiName.value);
+				if (alternative) {
+					menuItems.push({
+						text: i18n.ts.doReaction + ` (:${customEmojiName.value}:)`,
+						icon: 'ti ti-plus',
+						action: () => {
+							react(`:${customEmojiName.value}:`);
+						},
+					});
+				}
+			}
 		}
 
 		if (isLocal.value) {
