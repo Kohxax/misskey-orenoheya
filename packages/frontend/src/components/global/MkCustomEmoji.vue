@@ -40,7 +40,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, defineAsyncComponent, inject, ref } from 'vue';
 import type { MenuItem } from '@/types/menu.js';
 import { getProxiedImageUrl, getStaticImageUrl } from '@/utility/media-proxy.js';
-import { customEmojisMap } from '@/custom-emojis.js';
+import { customEmojisMap, customEmojis } from '@/custom-emojis.js';
 import * as os from '@/os.js';
 import { misskeyApi, misskeyApiGet } from '@/utility/misskey-api.js';
 import { copyToClipboard } from '@/utility/copy-to-clipboard.js';
@@ -68,6 +68,7 @@ const react = inject(DI.mfmEmojiReactCallback);
 
 const customEmojiName = computed(() => (props.name[0] === ':' ? props.name.substring(1, props.name.length - 1) : props.name).replace('@.', ''));
 const isLocal = computed(() => !props.host && (customEmojiName.value.endsWith('@.') || !customEmojiName.value.includes('@')));
+const canReact = computed(() => isLocal.value || customEmojisMap.has(customEmojiName.value));
 const emojiCodeToMute = makeEmojiMuteKey(props);
 const isMuted = checkEmojiMuted(emojiCodeToMute);
 const shouldMute = computed(() => !props.ignoreMuted && isMuted.value);
@@ -121,7 +122,7 @@ function onClick(ev: MouseEvent) {
 			});
 		}
 
-		if (props.menuReaction && react) {
+		if (props.menuReaction && canReact.value && react) {
 			menuItems.push({
 				text: i18n.ts.doReaction,
 				icon: 'ti ti-plus',
@@ -129,19 +130,6 @@ function onClick(ev: MouseEvent) {
 					react(`:${props.name}:`);
 				},
 			});
-
-			if (!isLocal.value) {
-				const alternative = customEmojisMap.get(customEmojiName.value);
-				if (alternative) {
-					menuItems.push({
-						text: i18n.ts.doReaction + ` (:${customEmojiName.value}:)`,
-						icon: 'ti ti-plus',
-						action: () => {
-							react(`:${customEmojiName.value}:`);
-						},
-					});
-				}
-			}
 		}
 
 		if (isLocal.value) {
