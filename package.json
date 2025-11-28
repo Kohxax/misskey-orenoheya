@@ -1,12 +1,7 @@
 {
 	"name": "misskey",
-<<<<<<< HEAD
-	"version": "2025.11.0-orenoheya-1.1",
+	"version": "2025.11.1-orenoheya-1.1",
 	"codename": "Bokukoha",
-=======
-	"version": "2025.11.1",
-	"codename": "nasubi",
->>>>>>> 2025.11.1
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Kohxax/misskey-orenoheya.git"
