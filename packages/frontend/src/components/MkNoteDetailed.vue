@@ -38,9 +38,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<span v-if="note.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[note.visibility]">
 				<i v-if="note.visibility === 'home'" class="ti ti-home"></i>
 				<i v-else-if="note.visibility === 'followers'" class="ti ti-lock"></i>
-				<i v-else-if="note.visibility === 'specified'" ref="specified" class="ti ti-mail"></i>
+				<i v-else-if="note.visibility === 'specified'" ref="specified" :class="isWall(note) ? 'ti ti-notebook' : 'ti ti-mail'"></i>
 			</span>
-			<span v-if="note.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
+			<span v-if="note.localOnly && !isWall(note)" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
 		</div>
 	</div>
 	<article :class="$style.note" @contextmenu.stop="onContextmenu">
@@ -56,9 +56,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<span v-if="appearNote.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[appearNote.visibility]">
 							<i v-if="appearNote.visibility === 'home'" class="ti ti-home"></i>
 							<i v-else-if="appearNote.visibility === 'followers'" class="ti ti-lock"></i>
-							<i v-else-if="appearNote.visibility === 'specified'" ref="specified" class="ti ti-mail"></i>
+							<i v-else-if="appearNote.visibility === 'specified'" ref="specified" :class="isWall(appearNote) ? 'ti ti-notebook' : 'ti ti-mail'"></i>
 						</span>
-						<span v-if="appearNote.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
+						<span v-if="appearNote.localOnly && !isWall(appearNote)" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
 					</div>
 				</div>
 				<div :class="$style.noteHeaderUsernameAndBadgeRoles">
@@ -307,6 +307,8 @@ const { $note: $appearNote, subscribe: subscribeManuallyToNoteCapture } = useNot
 	note: appearNote,
 	parentNote: note,
 });
+
+const isWall = (n: Misskey.entities.Note) => n.visibility === 'specified' && n.visibleUserIds?.length === 1 && n.visibleUserIds[0] === n.userId;
 
 const rootEl = useTemplateRef('rootEl');
 const menuButton = useTemplateRef('menuButton');
