@@ -26,27 +26,29 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<span v-if="note.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[note.visibility]">
 			<i v-if="note.visibility === 'home'" class="ti ti-home"></i>
 			<i v-else-if="note.visibility === 'followers'" class="ti ti-lock"></i>
-			<i v-else-if="note.visibility === 'specified'" ref="specified" class="ti ti-mail"></i>
+			<i v-else-if="note.visibility === 'specified'" ref="specified" :class="isWall ? 'ti ti-notebook' : 'ti ti-mail'"></i>
 		</span>
-		<span v-if="note.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
+		<span v-if="note.localOnly && !isWall" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
 		<span v-if="note.channel" style="margin-left: 0.5em;" :title="note.channel.name"><i class="ti ti-device-tv"></i></span>
 	</div>
 </header>
 </template>
 
 <script lang="ts" setup>
-import { inject } from 'vue';
+import { inject, computed } from 'vue';
 import * as Misskey from 'misskey-js';
 import { i18n } from '@/i18n.js';
 import { notePage } from '@/filters/note.js';
 import { userPage } from '@/filters/user.js';
 import { DI } from '@/di.js';
 
-defineProps<{
+const props = defineProps<{
 	note: Misskey.entities.Note;
 }>();
 
 const mock = inject(DI.mock, false);
+
+const isWall = computed(() => props.note.visibility === 'specified' && props.note.visibleUserIds?.length === 1 && props.note.visibleUserIds[0] === props.note.userId);
 </script>
 
 <style lang="scss" module>

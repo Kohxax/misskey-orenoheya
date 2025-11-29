@@ -25,14 +25,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span v-if="visibility === 'home'"><i class="ti ti-home"></i></span>
 					<span v-if="visibility === 'followers'"><i class="ti ti-lock"></i></span>
 					<span v-if="visibility === 'specified'"><i class="ti ti-mail"></i></span>
-					<span :class="$style.headerRightButtonText">{{ i18n.ts._visibility[visibility] }}</span>
+					<span v-if="(visibility as string) === 'wall'"><i class="ti ti-notebook"></i></span>
+					<span :class="$style.headerRightButtonText">{{ (visibility as string) === 'wall' ? '壁打ち' : i18n.ts._visibility[visibility] }}</span>
 				</button>
 				<button v-else class="_button" :class="[$style.headerRightItem, $style.visibility]" disabled>
 					<span><i class="ti ti-device-tv"></i></span>
 					<span :class="$style.headerRightButtonText">{{ targetChannel.name }}</span>
 				</button>
 			</template>
-			<button v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: localOnly }]" :disabled="targetChannel != null || visibility === 'specified'" @click="toggleLocalOnly">
+			<button v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: localOnly }]" :disabled="targetChannel != null || visibility === 'specified' || (visibility as string) === 'wall'" @click="toggleLocalOnly">
 				<span v-if="!localOnly"><i class="ti ti-rocket"></i></span>
 				<span v-else><i class="ti ti-rocket-off"></i></span>
 			</button>
@@ -993,6 +994,10 @@ async function post(ev?: MouseEvent) {
 		}
 	}
 
+	const actualVisibility = (visibility.value as string) === 'wall' ? 'specified' : visibility.value;
+	const actualVisibleUserIds = (visibility.value as string) === 'wall' ? [$i.id] : (visibility.value === 'specified' ? visibleUsers.value.map(u => u.id) : undefined);
+	const actualLocalOnly = (visibility.value as string) === 'wall' ? true : localOnly.value;
+
 	let postData = {
 		text: text.value === '' ? null : text.value,
 		fileIds: files.value.length > 0 ? files.value.map(f => f.id) : undefined,
@@ -1001,9 +1006,9 @@ async function post(ev?: MouseEvent) {
 		channelId: targetChannel.value ? targetChannel.value.id : undefined,
 		poll: poll.value,
 		cw: useCw.value ? cw.value ?? '' : null,
-		localOnly: localOnly.value,
-		visibility: visibility.value,
-		visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(u => u.id) : undefined,
+		localOnly: actualLocalOnly,
+		visibility: actualVisibility,
+		visibleUserIds: actualVisibleUserIds,
 		reactionAcceptance: reactionAcceptance.value,
 	};
 

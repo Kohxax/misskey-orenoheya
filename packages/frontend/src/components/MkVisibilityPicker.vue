@@ -37,6 +37,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<span :class="$style.itemDescription">{{ i18n.ts._visibility.specifiedDescription }}</span>
 			</div>
 		</button>
+		<button key="wall" :disabled="localOnly" class="_button" :class="[$style.item, { [$style.active]: v === 'wall' as any }]" data-index="5" @click="choose('wall' as any)">
+			<div :class="$style.icon"><i class="ti ti-notebook"></i></div>
+			<div :class="$style.body">
+				<span :class="$style.itemTitle">壁打ち</span>
+				<span :class="$style.itemDescription">自分にのみ公開</span>
+			</div>
+		</button>
 	</div>
 </MkModal>
 </template>
