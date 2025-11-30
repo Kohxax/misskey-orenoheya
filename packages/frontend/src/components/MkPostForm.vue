@@ -399,18 +399,26 @@ if (replyTargetNote.value && ['home', 'followers', 'specified'].includes(replyTa
 	}
 
 	if (visibility.value === 'specified') {
-		if (replyTargetNote.value.visibleUserIds) {
-			misskeyApi('users/show', {
-				userIds: replyTargetNote.value.visibleUserIds.filter(uid => uid !== $i.id && uid !== replyTargetNote.value?.userId),
-			}).then(users => {
-				users.forEach(u => pushVisibleUser(u));
-			});
+		const isWall = replyTargetNote.value.visibleUserIds?.length === 1 && replyTargetNote.value.visibleUserIds[0] === replyTargetNote.value.userId;
+		if (isWall && replyTargetNote.value.userId === $i.id) {
+			visibility.value = 'wall';
+			localOnly.value = true;
 		}
 
-		if (replyTargetNote.value.userId !== $i.id) {
-			misskeyApi('users/show', { userId: replyTargetNote.value.userId }).then(user => {
-				pushVisibleUser(user);
-			});
+		if (visibility.value === 'specified') {
+			if (replyTargetNote.value.visibleUserIds) {
+				misskeyApi('users/show', {
+					userIds: replyTargetNote.value.visibleUserIds.filter(uid => uid !== $i.id && uid !== replyTargetNote.value?.userId),
+				}).then(users => {
+					users.forEach(u => pushVisibleUser(u));
+				});
+			}
+
+			if (replyTargetNote.value.userId !== $i.id) {
+				misskeyApi('users/show', { userId: replyTargetNote.value.userId }).then(user => {
+					pushVisibleUser(user);
+				});
+			}
 		}
 	}
 }
