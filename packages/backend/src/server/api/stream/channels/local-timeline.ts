@@ -13,6 +13,7 @@ import type { Config } from '@/config.js';
 import { RoleService } from '@/core/RoleService.js';
 import { isQuotePacked, isRenotePacked } from '@/misc/is-renote.js';
 import type { JsonObject } from '@/misc/json-value.js';
+import { DI } from '@/di-symbols.js';
 import { NoteStreamingHidingService } from '../NoteStreamingHidingService.js';
 import Channel, { type ChannelRequest } from '../channel.js';
 
@@ -31,6 +32,7 @@ export class LocalTimelineChannel extends Channel {
 		request: ChannelRequest,
 
 		private metaService: MetaService,
+		@Inject(DI.config)
 		config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,

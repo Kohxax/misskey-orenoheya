@@ -33,6 +33,7 @@ export class HybridTimelineChannel extends Channel {
 		request: ChannelRequest,
 
 		private metaService: MetaService,
+		@Inject(DI.config)
 		config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
