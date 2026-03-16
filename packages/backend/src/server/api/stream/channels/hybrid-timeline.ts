@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import type { Packed } from '@/misc/json-schema.js';
 import { MetaService } from '@/core/MetaService.js';
 import type { Config } from '@/config.js';
@@ -13,9 +14,11 @@ import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
 import { isRenotePacked, isQuotePacked } from '@/misc/is-renote.js';
 import type { JsonObject } from '@/misc/json-value.js';
-import Channel, { type MiChannelService } from '../channel.js';
+import { NoteStreamingHidingService } from '../NoteStreamingHidingService.js';
+import Channel, { type ChannelRequest } from '../channel.js';
 
-class HybridTimelineChannel extends Channel {
+@Injectable({ scope: Scope.TRANSIENT })
+export class HybridTimelineChannel extends Channel {
 	public readonly chName = 'hybridTimeline';
 	public static shouldShare = false;
 	public static requireCredential = true as const;
@@ -26,16 +29,16 @@ class HybridTimelineChannel extends Channel {
 	private config: Config;
 
 	constructor(
+		@Inject(REQUEST)
+		request: ChannelRequest,
+
 		private metaService: MetaService,
 		config: Config,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
-
-		id: string,
-		connection: Channel['connection'],
+		private noteStreamingHidingService: NoteStreamingHidingService,
 	) {
-		super(id, connection);
-		this.config = config;
+		super(request);
 		//this.onNote = this.onNote.bind(this);
 	}
 
@@ -79,12 +82,7 @@ class HybridTimelineChannel extends Channel {
 			}
 		}
 
-		if (note.visibility === 'followers') {
-			if (!isMe && !Object.hasOwn(this.following, note.userId)) return;
-		} else if (note.visibility === 'specified') {
-			if (!isMe && !note.visibleUserIds!.includes(this.user!.id)) return;
-		}
-
+		if (!this.isNoteVisibleForMe(note)) return;
 		if (this.isNoteMutedOrBlocked(note)) return;
 
 		if (note.reply) {
@@ -108,10 +106,15 @@ class HybridTimelineChannel extends Channel {
 			}
 		}
 
-		if (this.user && note.renoteId && !note.text) {
-			if (note.renote && Object.keys(note.renote.reactions).length > 0) {
-				const myRenoteReaction = await this.noteEntityService.populateMyReaction(note.renote, this.user.id);
-				note.renote.myReaction = myRenoteReaction;
+		const { shouldSkip } = await this.noteStreamingHidingService.processHiding(note, this.user?.id ?? null);
+		if (shouldSkip) return;
+
+		if (this.user) {
+			if (isRenotePacked(note) && !isQuotePacked(note)) {
+				if (note.renote && Object.keys(note.renote.reactions).length > 0) {
+					const myRenoteReaction = await this.noteEntityService.populateMyReaction(note.renote, this.user.id);
+					note.renote.myReaction = myRenoteReaction;
+				}
 			}
 		}
 
@@ -122,33 +125,5 @@ class HybridTimelineChannel extends Channel {
 	public dispose(): void {
 		// Unsubscribe events
 		this.subscriber.off('notesStream', this.onNote);
-	}
-}
-
-@Injectable()
-export class HybridTimelineChannelService implements MiChannelService<true> {
-	public readonly shouldShare = HybridTimelineChannel.shouldShare;
-	public readonly requireCredential = HybridTimelineChannel.requireCredential;
-	public readonly kind = HybridTimelineChannel.kind;
-
-	constructor(
-		private metaService: MetaService,
-		@Inject(DI.config)
-		private config: Config,
-		private roleService: RoleService,
-		private noteEntityService: NoteEntityService,
-	) {
-	}
-
-	@bindThis
-	public create(id: string, connection: Channel['connection']): HybridTimelineChannel {
-		return new HybridTimelineChannel(
-			this.metaService,
-			this.config,
-			this.roleService,
-			this.noteEntityService,
-			id,
-			connection,
-		);
 	}
 }
