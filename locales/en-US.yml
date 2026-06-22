@@ -3248,6 +3248,8 @@ _search:
   pleaseEnterServerHost: "Enter the server host"
   pleaseSelectUser: "Select user"
   serverHostPlaceholder: "Example: misskey.example.com"
+  searchSinceDate: "Since this date"
+  searchUntilDate: "Until this date"
 _serverSetupWizard:
   installCompleted: "Misskey installation is now complete!"
   firstCreateAccount: "To begin, create an administrator account."

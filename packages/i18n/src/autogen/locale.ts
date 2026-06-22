@@ -12521,6 +12521,14 @@ export interface Locale extends ILocale {
          * 例: misskey.example.com
          */
         "serverHostPlaceholder": string;
+        /**
+         * この日付より後
+         */
+        "searchSinceDate": string;
+        /**
+         * この日付より前
+         */
+        "searchUntilDate": string;
     };
     "_serverSetupWizard": {
         /**

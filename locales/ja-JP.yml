@@ -3350,6 +3350,8 @@ _search:
   pleaseEnterServerHost: "サーバーのホストを入力してください"
   pleaseSelectUser: "ユーザーを選択してください"
   serverHostPlaceholder: "例: misskey.example.com"
+  searchSinceDate: "この日付以降"
+  searchUntilDate: "この日付以前"
 
 _serverSetupWizard:
   installCompleted: "Misskeyのインストールが完了しました！"

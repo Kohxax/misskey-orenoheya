@@ -84,6 +84,22 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 				</div>
+				<div class="_gaps_s">
+					<MkInput
+						v-model="sinceDateInput"
+						type="date"
+					>
+						<template #label>{{ i18n.ts._search.searchSinceDate }}</template>
+						<template #prefix><i class="ti ti-calendar"></i></template>
+					</MkInput>
+					<MkInput
+						v-model="untilDateInput"
+						type="date"
+					>
+						<template #label>{{ i18n.ts._search.searchUntilDate }}</template>
+						<template #prefix><i class="ti ti-calendar"></i></template>
+					</MkInput>
+				</div>
 			</div>
 		</MkFoldableSection>
 		<div>
@@ -147,6 +163,8 @@ const paginator = shallowRef<Paginator<'notes/search'> | null>(null);
 
 const searchQuery = ref(toRef(props, 'query').value);
 const hostInput = ref(toRef(props, 'host').value);
+const sinceDateInput = ref<string | null>(null);
+const untilDateInput = ref<string | null>(null);
 
 const user = shallowRef<Misskey.entities.UserDetailed | null>(null);
 
@@ -205,12 +223,25 @@ type SearchParams = {
 	readonly query: string;
 	readonly host?: string;
 	readonly userId?: string;
+	readonly sinceDate?: number;
+	readonly untilDate?: number;
 };
 
 const fixHostIfLocal = (target: string | null | undefined) => {
 	if (!target || target === localHost) return '.';
 	return target;
 };
+
+const dateParams = computed<{ sinceDate?: number; untilDate?: number }>(() => {
+	const result: { sinceDate?: number; untilDate?: number } = {};
+	if (sinceDateInput.value) {
+		result.sinceDate = new Date(sinceDateInput.value + 'T00:00:00').getTime();
+	}
+	if (untilDateInput.value) {
+		result.untilDate = new Date(untilDateInput.value + 'T23:59:59.999').getTime();
+	}
+	return result;
+});
 
 const searchParams = computed<SearchParams | null>(() => {
 	const trimmedQuery = searchQuery.value.trim();
@@ -222,6 +253,7 @@ const searchParams = computed<SearchParams | null>(() => {
 			query: trimmedQuery,
 			host: fixHostIfLocal(user.value.host),
 			userId: user.value.id,
+			...dateParams.value,
 		};
 	}
 
@@ -236,6 +268,7 @@ const searchParams = computed<SearchParams | null>(() => {
 		return {
 			query: trimmedQuery,
 			host: fixHostIfLocal(trimmedHost),
+			...dateParams.value,
 		};
 	}
 
@@ -243,11 +276,13 @@ const searchParams = computed<SearchParams | null>(() => {
 		return {
 			query: trimmedQuery,
 			host: '.',
+			...dateParams.value,
 		};
 	}
 
 	return {
 		query: trimmedQuery,
+		...dateParams.value,
 	};
 });
 
