@@ -12522,11 +12522,11 @@ export interface Locale extends ILocale {
          */
         "serverHostPlaceholder": string;
         /**
-         * この日付以降
+         * より後
          */
         "searchSinceDate": string;
         /**
-         * この日付以前
+         * より前
          */
         "searchUntilDate": string;
     };
