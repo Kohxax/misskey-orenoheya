@@ -218,17 +218,19 @@ export class SearchService {
 			.leftJoinAndSelect('reply.user', 'replyUser')
 			.leftJoinAndSelect('renote.user', 'renoteUser');
 
-		if (this.config.fulltextSearch?.provider === 'sqlPgroonga') {
-			query.andWhere(new Brackets(qb => {
-				qb.where('note.text &@~ :q', { q })
-					.orWhere('note.cw &@~ :q', { q });
-			}));
-		} else {
-			const likeQ = `%${ sqlLikeEscape(q.toLowerCase()) }%`;
-			query.andWhere(new Brackets(qb => {
-				qb.where('LOWER(note.text) LIKE :q', { q: likeQ })
-					.orWhere('LOWER(note.cw) LIKE :q', { q: likeQ });
-			}));
+		if (q.trim()) {
+			if (this.config.fulltextSearch?.provider === 'sqlPgroonga') {
+				query.andWhere(new Brackets(qb => {
+					qb.where('note.text &@~ :q', { q })
+						.orWhere('note.cw &@~ :q', { q });
+				}));
+			} else {
+				const likeQ = `%${ sqlLikeEscape(q.toLowerCase()) }%`;
+				query.andWhere(new Brackets(qb => {
+					qb.where('LOWER(note.text) LIKE :q', { q: likeQ })
+						.orWhere('LOWER(note.cw) LIKE :q', { q: likeQ });
+				}));
+			}
 		}
 
 		if (opts.host) {

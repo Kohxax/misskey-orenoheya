@@ -243,9 +243,12 @@ const dateParams = computed<{ sinceDate?: number; untilDate?: number }>(() => {
 	return result;
 });
 
+const hasDateFilter = computed(() => !!(sinceDateInput.value || untilDateInput.value));
+
 const searchParams = computed<SearchParams | null>(() => {
 	const trimmedQuery = searchQuery.value.trim();
-	if (!trimmedQuery) return null;
+	const canSearchWithoutQuery = hasDateFilter.value && searchScope.value === 'user' && user.value != null;
+	if (!trimmedQuery && !canSearchWithoutQuery) return null;
 
 	if (searchScope.value === 'user') {
 		if (user.value == null) return null;

@@ -52,7 +52,7 @@ export const paramDef = {
 		userId: { type: 'string', format: 'misskey:id', nullable: true, default: null },
 		channelId: { type: 'string', format: 'misskey:id', nullable: true, default: null },
 	},
-	required: ['query'],
+	required: [],
 } as const;
 
 // TODO: ロジックをサービスに切り出す
@@ -74,7 +74,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.unavailable);
 			}
 
-			const notes = await this.searchService.searchNote(ps.query, me, {
+			const notes = await this.searchService.searchNote(ps.query ?? '', me, {
 				userId: ps.userId,
 				channelId: ps.channelId,
 				host: ps.host,
