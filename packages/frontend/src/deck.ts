@@ -47,6 +47,7 @@ export const columnTypes = [
 	'direct',
 	'roleTimeline',
 	'chat',
+	'xHomeTimeline',
 ] as const;
 
 export type ColumnType = typeof columnTypes[number];

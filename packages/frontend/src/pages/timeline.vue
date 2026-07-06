@@ -10,7 +10,35 @@ SPDX-License-Identifier: AGPL-3.0-only
 			{{ i18n.ts._timelineDescription[src] }}
 		</MkTip>
 		<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
+
+		<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" v-if="src === 'x-following'" :class="$style.xTl" :refresher="xFollowingTimeline.reload">
+			<div v-if="xFollowingTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xFollowingTimeline.bridgeError.value.type}`]]">
+				<i :class="xFollowingTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xFollowingTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
+				<span>{{ xFollowingTimeline.bridgeError.value.message }}</span>
+			</div>
+			<div v-else-if="xFollowingTimeline.error.value" :class="$style.xError">
+				<i class="ti ti-alert-circle"></i>
+				<span>{{ xFollowingTimeline.error.value }}</span>
+			</div>
+			<div v-else-if="xFollowingTimeline.tweets.value.length === 0 && !xFollowingTimeline.loading.value" :class="$style.xEmpty">
+				<i class="ti ti-mood-empty"></i>
+			</div>
+			<template v-else>
+				<MkXTweet
+					v-for="tweet in xFollowingTimeline.tweets.value"
+					:key="tweet.id"
+					:tweet="tweet"
+					:likedIds="xFollowingTimeline.likedIds.value"
+					@like="xFollowingTimeline.onLike"
+				/>
+			</template>
+			<div v-if="xFollowingTimeline.loading.value && xFollowingTimeline.tweets.value.length === 0" :class="$style.xLoading">
+				<MkLoading/>
+			</div>
+		</component>
+
 		<MkStreamingNotesTimeline
+			v-else
 			ref="tlComponent"
 			:key="src + withRenotes + withReplies + onlyFiles + withSensitive"
 			:class="$style.tl"
@@ -34,6 +62,9 @@ import type { BasicTimelineType } from '@/timelines.js';
 import type { PageHeaderItem } from '@/types/page-header.js';
 import MkStreamingNotesTimeline from '@/components/MkStreamingNotesTimeline.vue';
 import MkPostForm from '@/components/MkPostForm.vue';
+import MkPullToRefresh from '@/components/MkPullToRefresh.vue';
+import MkXTweet from '@/components/MkXTweet.vue';
+import MkLoading from '@/components/global/MkLoading.vue';
 import * as os from '@/os.js';
 import { store } from '@/store.js';
 import { i18n } from '@/i18n.js';
@@ -45,14 +76,15 @@ import { deepMerge } from '@/utility/merge.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { availableBasicTimelines, hasWithReplies, isAvailableBasicTimeline, isBasicTimeline, basicTimelineIconClass } from '@/timelines.js';
 import { prefer } from '@/preferences.js';
+import { useXTimeline } from '@/composables/use-x-timeline.js';
 
 const tlComponent = useTemplateRef('tlComponent');
 
-type TimelinePageSrc = BasicTimelineType | `list:${string}`;
+type TimelinePageSrc = BasicTimelineType | `list:${string}` | 'x-following';
 
 const srcWhenNotSignin = ref<'local' | 'global'>(isAvailableBasicTimeline('local') ? 'local' : 'global');
 const src = computed<TimelinePageSrc>({
-	get: () => ($i ? store.r.tl.value.src : srcWhenNotSignin.value),
+	get: () => ($i ? store.r.tl.value.src as TimelinePageSrc : srcWhenNotSignin.value),
 	set: (x) => saveSrc(x),
 });
 const withRenotes = computed<boolean>({
@@ -105,6 +137,24 @@ const withSensitive = computed<boolean>({
 });
 
 const showFixedPostForm = prefer.model('showFixedPostForm');
+const showXFollowingTab = store.model('showXFollowingTab');
+
+const xFollowingTimeline = useXTimeline('x/timeline', { polling: false });
+
+watch(src, async (newSrc) => {
+	if (newSrc === 'x-following' && xFollowingTimeline.tweets.value.length === 0) {
+		xFollowingTimeline.loading.value = true;
+		await xFollowingTimeline.fetchTimeline();
+		xFollowingTimeline.loading.value = false;
+	}
+}, { immediate: true });
+
+// X タブが非表示になったときに src をリセット
+watch(showXFollowingTab, (v) => {
+	if (!v && src.value === 'x-following') {
+		src.value = availableBasicTimelines()[0];
+	}
+});
 
 async function chooseList(ev: PointerEvent): Promise<void> {
 	const lists = await userListsCache.fetch();
@@ -191,6 +241,8 @@ function saveTlFilter(key: keyof typeof store.s.tl.filter, newValue: boolean) {
 	}
 }
 
+const isXTab = computed(() => src.value === 'x-following');
+
 function switchTlIfNeeded() {
 	if (isBasicTimeline(src.value) && !isAvailableBasicTimeline(src.value)) {
 		src.value = availableBasicTimelines()[0];
@@ -211,40 +263,59 @@ const headerActions = computed<PageHeaderItem[]>(() => {
 		handler: (ev) => {
 			const menuItems: MenuItem[] = [];
 
-			menuItems.push({
-				type: 'switch',
-				icon: 'ti ti-repeat',
-				text: i18n.ts.showRenotes,
-				ref: withRenotes,
-			});
-
-			if (isBasicTimeline(src.value) && hasWithReplies(src.value)) {
+			if (!isXTab.value) {
 				menuItems.push({
 					type: 'switch',
-					icon: 'ti ti-messages',
-					text: i18n.ts.showRepliesToOthersInTimeline,
-					ref: withReplies,
-					disabled: onlyFiles,
+					icon: 'ti ti-repeat',
+					text: i18n.ts.showRenotes,
+					ref: withRenotes,
+				});
+
+				if (isBasicTimeline(src.value) && hasWithReplies(src.value)) {
+					menuItems.push({
+						type: 'switch',
+						icon: 'ti ti-messages',
+						text: i18n.ts.showRepliesToOthersInTimeline,
+						ref: withReplies,
+						disabled: onlyFiles,
+					});
+				}
+
+				menuItems.push({
+					type: 'switch',
+					icon: 'ti ti-eye-exclamation',
+					text: i18n.ts.withSensitive,
+					ref: withSensitive,
+				}, {
+					type: 'switch',
+					icon: 'ti ti-photo',
+					text: i18n.ts.fileAttachedOnly,
+					ref: onlyFiles,
+					disabled: isBasicTimeline(src.value) && hasWithReplies(src.value) ? withReplies : false,
+				}, {
+					type: 'divider',
+				}, {
+					type: 'switch',
+					text: i18n.ts.showFixedPostForm,
+					ref: showFixedPostForm,
+				}, {
+					type: 'divider',
+				});
+			} else {
+				menuItems.push({
+					type: 'switch',
+					text: i18n.ts.showFixedPostForm,
+					ref: showFixedPostForm,
+				}, {
+					type: 'divider',
 				});
 			}
 
 			menuItems.push({
+				icon: 'ti ti-brand-x',
 				type: 'switch',
-				icon: 'ti ti-eye-exclamation',
-				text: i18n.ts.withSensitive,
-				ref: withSensitive,
-			}, {
-				type: 'switch',
-				icon: 'ti ti-photo',
-				text: i18n.ts.fileAttachedOnly,
-				ref: onlyFiles,
-				disabled: isBasicTimeline(src.value) && hasWithReplies(src.value) ? withReplies : false,
-			}, {
-				type: 'divider',
-			}, {
-				type: 'switch',
-				text: i18n.ts.showFixedPostForm,
-				ref: showFixedPostForm,
+				text: i18n.ts.showXFollowingTab,
+				ref: showXFollowingTab,
 			});
 
 			os.popupMenu(menuItems, ev.currentTarget ?? ev.target);
@@ -256,7 +327,11 @@ const headerActions = computed<PageHeaderItem[]>(() => {
 			icon: 'ti ti-refresh',
 			text: i18n.ts.reload,
 			handler: () => {
-				tlComponent.value?.reloadTimeline();
+				if (src.value === 'x-following') {
+					xFollowingTimeline.reload();
+				} else {
+					tlComponent.value?.reloadTimeline();
+				}
 			},
 		});
 	}
@@ -264,22 +339,32 @@ const headerActions = computed<PageHeaderItem[]>(() => {
 	return items;
 });
 
-const headerTabs = computed(() => [...(prefer.r.pinnedUserLists.value.map(l => ({
-	key: 'list:' + l.id,
-	title: l.name,
-	icon: 'ti ti-star',
-	iconOnly: true,
-}))), ...availableBasicTimelines().map(tl => ({
-	key: tl,
-	title: i18n.ts._timelines[tl],
-	icon: basicTimelineIconClass(tl),
-	iconOnly: true,
-})), {
-	icon: 'ti ti-device-tv',
-	title: i18n.ts.channel,
-	iconOnly: true,
-	onClick: chooseChannel,
-}] as Tab[]);
+const headerTabs = computed(() => [
+	...(prefer.r.pinnedUserLists.value.map(l => ({
+		key: 'list:' + l.id,
+		title: l.name,
+		icon: 'ti ti-star',
+		iconOnly: true,
+	}))),
+	...availableBasicTimelines().map(tl => ({
+		key: tl,
+		title: i18n.ts._timelines[tl],
+		icon: basicTimelineIconClass(tl),
+		iconOnly: true,
+	})),
+	{
+		icon: 'ti ti-device-tv',
+		title: i18n.ts.channel,
+		iconOnly: true,
+		onClick: chooseChannel,
+	},
+	...(showXFollowingTab.value ? [{
+		key: 'x-following',
+		title: i18n.ts._deck._columns.xHomeTimeline,
+		icon: 'ti ti-brand-x',
+		iconOnly: true,
+	}] : []),
+] as Tab[]);
 
 const headerTabsWhenNotLogin = computed(() => [...availableBasicTimelines().map(tl => ({
 	key: tl,
@@ -322,5 +407,50 @@ definePage(() => ({
 	background: var(--MI_THEME-bg);
 	border-radius: var(--MI-radius);
 	overflow: clip;
+}
+
+.xTl {
+	border-radius: var(--MI-radius);
+	overflow: clip;
+	background: var(--MI_THEME-panel);
+}
+
+.xError {
+	padding: 12px 16px;
+	font-size: 0.85em;
+	line-height: 1.5;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	color: var(--MI_THEME-error);
+	border-bottom: solid 0.5px var(--MI_THEME-divider);
+	border-radius: var(--MI-radius);
+	margin-bottom: var(--MI-margin);
+}
+
+.xError_AUTH_ERROR {
+	background: color-mix(in srgb, var(--MI_THEME-error) 10%, var(--MI_THEME-panel));
+}
+
+.xError_QUERY_ID_ERROR {
+	background: color-mix(in srgb, var(--MI_THEME-warn, #f0a500) 10%, var(--MI_THEME-panel));
+	color: var(--MI_THEME-warn, #c07800);
+}
+
+.xError_UNKNOWN {
+	background: color-mix(in srgb, var(--MI_THEME-error) 10%, var(--MI_THEME-panel));
+}
+
+.xEmpty {
+	padding: 32px;
+	text-align: center;
+	color: var(--MI_THEME-fgTransparentWeak);
+	font-size: 1.5em;
+}
+
+.xLoading {
+	padding: 16px;
+	display: flex;
+	justify-content: center;
 }
 </style>

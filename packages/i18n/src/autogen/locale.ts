@@ -4945,6 +4945,10 @@ export interface Locale extends ILocale {
      */
     "confirmHideRepliesAll": string;
     /**
+     * X フォロー中タブを表示
+     */
+    "showXFollowingTab": string;
+    /**
      * 外部サービス
      */
     "externalServices": string;
@@ -11189,6 +11193,10 @@ export interface Locale extends ILocale {
              * ダイレクトメッセージ
              */
             "chat": string;
+            /**
+             * フォロー中
+             */
+            "xHomeTimeline": string;
         };
     };
     "_dialog": {
