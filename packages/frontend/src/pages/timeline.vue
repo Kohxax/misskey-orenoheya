@@ -346,7 +346,7 @@ const headerTabs = computed(() => [
 		icon: 'ti ti-star',
 		iconOnly: true,
 	}))),
-	...availableBasicTimelines().map(tl => ({
+	...availableBasicTimelines().filter(tl => tl === 'home').map(tl => ({
 		key: tl,
 		title: i18n.ts._timelines[tl],
 		icon: basicTimelineIconClass(tl),
@@ -358,6 +358,12 @@ const headerTabs = computed(() => [
 		icon: 'ti ti-brand-x',
 		iconOnly: true,
 	}] : []),
+	...availableBasicTimelines().filter(tl => tl !== 'home').map(tl => ({
+		key: tl,
+		title: i18n.ts._timelines[tl],
+		icon: basicTimelineIconClass(tl),
+		iconOnly: true,
+	})),
 	{
 		icon: 'ti ti-device-tv',
 		title: i18n.ts.channel,
