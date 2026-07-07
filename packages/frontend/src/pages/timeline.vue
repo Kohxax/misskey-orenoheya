@@ -352,18 +352,18 @@ const headerTabs = computed(() => [
 		icon: basicTimelineIconClass(tl),
 		iconOnly: true,
 	})),
-	{
-		icon: 'ti ti-device-tv',
-		title: i18n.ts.channel,
-		iconOnly: true,
-		onClick: chooseChannel,
-	},
 	...(showXFollowingTab.value ? [{
 		key: 'x-following',
 		title: i18n.ts._deck._columns.xHomeTimeline,
 		icon: 'ti ti-brand-x',
 		iconOnly: true,
 	}] : []),
+	{
+		icon: 'ti ti-device-tv',
+		title: i18n.ts.channel,
+		iconOnly: true,
+		onClick: chooseChannel,
+	},
 ] as Tab[]);
 
 const headerTabsWhenNotLogin = computed(() => [...availableBasicTimelines().map(tl => ({
