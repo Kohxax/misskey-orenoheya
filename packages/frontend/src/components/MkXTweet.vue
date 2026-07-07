@@ -29,6 +29,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</a>
 			</div>
 
+			<div v-if="!isQuote" :class="$style.xTicker">
+				<i class="ti ti-brand-x" :class="$style.xTickerIcon"></i>
+				<span :class="$style.xTickerName">X</span>
+			</div>
+
 			<p :class="$style.text"><template v-for="(seg, i) in segmentText(tweet.text)" :key="i"><img v-if="seg.kind === 'emoji'" :class="$style.inlineEmoji" :src="seg.src" :alt="seg.value"/><a v-else-if="seg.kind === 'url'" :class="$style.textLink" :href="seg.value" target="_blank" rel="noopener noreferrer">{{ seg.value }}</a><template v-else>{{ seg.value }}</template></template></p>
 
 			<!-- URL プレビュー -->
@@ -478,6 +483,36 @@ function onShare(): void {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
+}
+
+$ticker-height: 2ex;
+
+.xTicker {
+	display: inline-flex;
+	align-items: center;
+	height: $ticker-height;
+	border-radius: 4px 0 0 4px;
+	overflow: clip;
+	margin-bottom: 4px;
+	background: linear-gradient(90deg, #000, #0000);
+	mask-image: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,0) calc(100% - 16px), rgba(0,0,0,0) 100%);
+}
+
+.xTickerIcon {
+	font-size: $ticker-height;
+	flex-shrink: 0;
+	color: #fff;
+}
+
+.xTickerName {
+	margin-left: 4px;
+	line-height: 1;
+	font-size: 0.9em;
+	font-weight: bold;
+	white-space: nowrap;
+	color: var(--MI_THEME-fg);
+	-webkit-text-stroke: var(--MI_THEME-panel) .225em;
+	paint-order: stroke fill;
 }
 
 </style>
