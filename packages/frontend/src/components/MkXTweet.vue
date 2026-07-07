@@ -217,8 +217,15 @@ function onLike(): void {
 	emit('like', props.tweet.id);
 }
 
+const shareUrl = computed(() => {
+	if (props.tweet.retweetedBy && props.tweet.originalId) {
+		return `https://x.com/${props.tweet.author.screenName}/status/${props.tweet.originalId}`;
+	}
+	return tweetUrl.value;
+});
+
 function onShare(): void {
-	os.post({ initialText: tweetUrl.value, instant: true });
+	os.post({ initialText: shareUrl.value, instant: true });
 }
 </script>
 

@@ -25,4 +25,6 @@ export interface XTweet {
 		name: string;
 		screenName: string;
 	};
+	/** リポスト時のみ: 元ツイートのID（idはRT自体のID、originalIdが元ツイートのID） */
+	originalId?: string;
 }
