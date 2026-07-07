@@ -30,7 +30,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 
 			<div v-if="!isQuote" :class="$style.xTicker">
-				<i class="ti ti-brand-x" :class="$style.xTickerIcon"></i>
+				<svg :class="$style.xTickerIcon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.256 5.627L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+				</svg>
 				<span :class="$style.xTickerName">X</span>
 			</div>
 
@@ -329,7 +331,7 @@ function onShare(): void {
 	display: flex;
 	align-items: baseline;
 	white-space: nowrap;
-	margin-bottom: 4px;
+	margin-bottom: 0;
 	overflow: hidden;
 }
 
@@ -504,31 +506,39 @@ function onShare(): void {
 }
 
 .xTicker {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
-	height: 1.5em;
+	height: 2ex;
 	border-radius: 4px 0 0 4px;
 	overflow: clip;
 	margin-bottom: 4px;
-	// 左が黒、右に行くにつれて透明。テキストが消えないよう60%まで不透明を維持
-	background: linear-gradient(90deg, #000 0%, #000 60%, transparent 100%);
-	padding-right: 16px;
+	background: linear-gradient(90deg, #000, #0000);
+	color: #fff;
+
+	mask-image: linear-gradient(90deg,
+		rgb(0,0,0),
+		rgb(0,0,0) calc(100% - 16px),
+		rgba(0,0,0,0) 100%
+	);
 }
 
 .xTickerIcon {
 	flex-shrink: 0;
-	color: #fff;
-	font-size: 1em;
-	line-height: 1;
-	padding: 0 2px 0 3px;
+	height: 1.4ex;
+	width: 1.4ex;
+	padding: 0 3px;
 }
 
 .xTickerName {
+	margin-left: 2px;
 	line-height: 1;
-	font-size: 0.85em;
+	font-size: 0.9em;
 	font-weight: bold;
 	white-space: nowrap;
+	overflow: visible;
 	color: #fff;
+	-webkit-text-stroke: #000 0.15em;
+	paint-order: stroke fill;
 }
 
 </style>
