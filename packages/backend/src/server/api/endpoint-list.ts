@@ -207,6 +207,7 @@ export * as 'fetch-rss' from './endpoints/fetch-rss.js';
 export * as 'x/timeline' from './endpoints/x/timeline.js';
 export * as 'x/like' from './endpoints/x/like.js';
 export * as 'x/unlike' from './endpoints/x/unlike.js';
+export * as 'x/liked' from './endpoints/x/liked.js';
 export * as 'x/status' from './endpoints/x/status.js';
 export * as 'flash/create' from './endpoints/flash/create.js';
 export * as 'flash/delete' from './endpoints/flash/delete.js';

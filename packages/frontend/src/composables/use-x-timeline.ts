@@ -63,10 +63,20 @@ export function useXTimeline(
 		}
 	}
 
+	async function fetchLiked(): Promise<void> {
+		try {
+			const ids = await callApi<string[]>('x/liked');
+			likedIds.value = new Set(ids);
+		} catch {
+			// 取得失敗は無視
+		}
+	}
+
 	async function fetchTimeline(): Promise<void> {
+		const isFirstFetch = tweets.value.length === 0;
 		try {
 			const fetched = await callApi<XTweet[]>(timelineEndpoint);
-			if (tweets.value.length === 0) {
+			if (isFirstFetch) {
 				tweets.value = sortByIdDesc(fetched);
 			} else {
 				const latestId = tweets.value[0].id;
@@ -77,9 +87,12 @@ export function useXTimeline(
 			}
 			error.value = null;
 		} catch (e) {
-			if (tweets.value.length === 0) {
+			if (isFirstFetch) {
 				error.value = String(e);
 			}
+		}
+		if (isFirstFetch) {
+			await fetchLiked();
 		}
 		await fetchStatus();
 	}
