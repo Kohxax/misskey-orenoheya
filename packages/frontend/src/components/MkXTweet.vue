@@ -198,7 +198,6 @@ async function openLightbox(photoIndex: number): Promise<void> {
 		dataSource: sources,
 		pswpModule: PhotoSwipe,
 		loop: false,
-		history: true,
 		initialZoomLevel: 'fit',
 		secondaryZoomLevel: 2,
 		maxZoomLevel: 2,
@@ -210,6 +209,25 @@ async function openLightbox(photoIndex: number): Promise<void> {
 			? { top: 32, bottom: 90, left: 32, right: 32 }
 			: { top: 0, bottom: 78, left: 0, right: 0 },
 	});
+
+	const popstateHandler = (): void => {
+		if (lb.pswp && lb.pswp.isOpen) {
+			lb.pswp.close();
+		}
+	};
+
+	lb.on('afterInit', () => {
+		window.history.pushState(null, '', '#pswp');
+		window.addEventListener('popstate', popstateHandler);
+	});
+
+	lb.on('destroy', () => {
+		window.removeEventListener('popstate', popstateHandler);
+		if (window.location.hash === '#pswp') {
+			window.history.back();
+		}
+	});
+
 	lb.init();
 	lb.loadAndOpen(photoIndex);
 }
@@ -485,34 +503,32 @@ function onShare(): void {
 	gap: 6px;
 }
 
-$ticker-height: 2ex;
-
 .xTicker {
 	display: inline-flex;
 	align-items: center;
-	height: $ticker-height;
+	height: 1.5em;
 	border-radius: 4px 0 0 4px;
 	overflow: clip;
 	margin-bottom: 4px;
-	background: linear-gradient(90deg, #000, #0000);
-	mask-image: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,0) calc(100% - 16px), rgba(0,0,0,0) 100%);
+	// 左が黒、右に行くにつれて透明。テキストが消えないよう60%まで不透明を維持
+	background: linear-gradient(90deg, #000 0%, #000 60%, transparent 100%);
+	padding-right: 16px;
 }
 
 .xTickerIcon {
-	font-size: $ticker-height;
 	flex-shrink: 0;
 	color: #fff;
+	font-size: 1em;
+	line-height: 1;
+	padding: 0 2px 0 3px;
 }
 
 .xTickerName {
-	margin-left: 4px;
 	line-height: 1;
-	font-size: 0.9em;
+	font-size: 0.85em;
 	font-weight: bold;
 	white-space: nowrap;
-	color: var(--MI_THEME-fg);
-	-webkit-text-stroke: var(--MI_THEME-panel) .225em;
-	paint-order: stroke fill;
+	color: #fff;
 }
 
 </style>
