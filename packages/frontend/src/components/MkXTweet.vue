@@ -193,6 +193,7 @@ async function openLightbox(photoIndex: number): Promise<void> {
 		dataSource: sources,
 		pswpModule: PhotoSwipe,
 		loop: false,
+		history: true,
 		initialZoomLevel: 'fit',
 		secondaryZoomLevel: 2,
 		maxZoomLevel: 2,
