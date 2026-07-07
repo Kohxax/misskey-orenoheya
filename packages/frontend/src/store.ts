@@ -65,6 +65,14 @@ export const store = markRaw(new Pizzax('base', {
 		where: 'deviceAccount',
 		default: false,
 	},
+	showXForYouTab: {
+		where: 'deviceAccount',
+		default: false,
+	},
+	xTimelineMode: {
+		where: 'deviceAccount',
+		default: 'following' as 'following' | 'for-you',
+	},
 	darkMode: {
 		where: 'device',
 		default: false,

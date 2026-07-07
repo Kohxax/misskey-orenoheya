@@ -205,6 +205,7 @@ export * as 'federation/users' from './endpoints/federation/users.js';
 export * as 'fetch-external-resources' from './endpoints/fetch-external-resources.js';
 export * as 'fetch-rss' from './endpoints/fetch-rss.js';
 export * as 'x/timeline' from './endpoints/x/timeline.js';
+export * as 'x/for-you' from './endpoints/x/for-you.js';
 export * as 'x/like' from './endpoints/x/like.js';
 export * as 'x/unlike' from './endpoints/x/unlike.js';
 export * as 'x/liked' from './endpoints/x/liked.js';

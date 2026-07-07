@@ -11,31 +11,59 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</MkTip>
 		<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
 
-		<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" v-if="src === 'x-following'" :class="$style.xTl" :refresher="xFollowingTimeline.reload">
-			<div v-if="xFollowingTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xFollowingTimeline.bridgeError.value.type}`]]">
-				<i :class="xFollowingTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xFollowingTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
-				<span>{{ xFollowingTimeline.bridgeError.value.message }}</span>
-			</div>
-			<div v-else-if="xFollowingTimeline.error.value" :class="$style.xError">
-				<i class="ti ti-alert-circle"></i>
-				<span>{{ xFollowingTimeline.error.value }}</span>
-			</div>
-			<div v-else-if="xFollowingTimeline.tweets.value.length === 0 && !xFollowingTimeline.loading.value" :class="$style.xEmpty">
-				<i class="ti ti-mood-empty"></i>
-			</div>
-			<template v-else>
-				<MkXTweet
-					v-for="tweet in xFollowingTimeline.tweets.value"
-					:key="tweet.id"
-					:tweet="tweet"
-					:likedIds="xFollowingTimeline.likedIds.value"
-					@like="xFollowingTimeline.onLike"
-				/>
-			</template>
-			<div v-if="xFollowingTimeline.loading.value && xFollowingTimeline.tweets.value.length === 0" :class="$style.xLoading">
-				<MkLoading/>
-			</div>
-		</component>
+		<div v-if="src === 'x-following'" :class="$style.xTl">
+			<MkTab v-if="xTabItems.length > 1" v-model="xTimelineMode" :tabs="xTabItems" :class="$style.xModeTab"/>
+			<component v-if="activeXMode === 'following'" :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="xFollowingTimeline.reload">
+				<div v-if="xFollowingTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xFollowingTimeline.bridgeError.value.type}`]]">
+					<i :class="xFollowingTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xFollowingTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
+					<span>{{ xFollowingTimeline.bridgeError.value.message }}</span>
+				</div>
+				<div v-else-if="xFollowingTimeline.error.value" :class="$style.xError">
+					<i class="ti ti-alert-circle"></i>
+					<span>{{ xFollowingTimeline.error.value }}</span>
+				</div>
+				<div v-else-if="xFollowingTimeline.tweets.value.length === 0 && !xFollowingTimeline.loading.value" :class="$style.xEmpty">
+					<i class="ti ti-mood-empty"></i>
+				</div>
+				<template v-else>
+					<MkXTweet
+						v-for="tweet in xFollowingTimeline.tweets.value"
+						:key="tweet.id"
+						:tweet="tweet"
+						:likedIds="xFollowingTimeline.likedIds.value"
+						@like="xFollowingTimeline.onLike"
+					/>
+				</template>
+				<div v-if="xFollowingTimeline.loading.value && xFollowingTimeline.tweets.value.length === 0" :class="$style.xLoading">
+					<MkLoading/>
+				</div>
+			</component>
+			<component v-else :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="xForYouTimeline.reload">
+				<div v-if="xForYouTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xForYouTimeline.bridgeError.value.type}`]]">
+					<i :class="xForYouTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xForYouTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
+					<span>{{ xForYouTimeline.bridgeError.value.message }}</span>
+				</div>
+				<div v-else-if="xForYouTimeline.error.value" :class="$style.xError">
+					<i class="ti ti-alert-circle"></i>
+					<span>{{ xForYouTimeline.error.value }}</span>
+				</div>
+				<div v-else-if="xForYouTimeline.tweets.value.length === 0 && !xForYouTimeline.loading.value" :class="$style.xEmpty">
+					<i class="ti ti-mood-empty"></i>
+				</div>
+				<template v-else>
+					<MkXTweet
+						v-for="tweet in xForYouTimeline.tweets.value"
+						:key="tweet.id"
+						:tweet="tweet"
+						:likedIds="xForYouTimeline.likedIds.value"
+						@like="xForYouTimeline.onLike"
+					/>
+				</template>
+				<div v-if="xForYouTimeline.loading.value && xForYouTimeline.tweets.value.length === 0" :class="$style.xLoading">
+					<MkLoading/>
+				</div>
+			</component>
+		</div>
 
 		<MkStreamingNotesTimeline
 			v-else
@@ -64,6 +92,7 @@ import MkStreamingNotesTimeline from '@/components/MkStreamingNotesTimeline.vue'
 import MkPostForm from '@/components/MkPostForm.vue';
 import MkPullToRefresh from '@/components/MkPullToRefresh.vue';
 import MkXTweet from '@/components/MkXTweet.vue';
+import MkTab from '@/components/MkTab.vue';
 import MkLoading from '@/components/global/MkLoading.vue';
 import * as os from '@/os.js';
 import { store } from '@/store.js';
@@ -138,19 +167,49 @@ const withSensitive = computed<boolean>({
 
 const showFixedPostForm = prefer.model('showFixedPostForm');
 const showXFollowingTab = store.model('showXFollowingTab');
+const showXForYouTab = store.model('showXForYouTab');
+const xTimelineMode = store.model('xTimelineMode');
+
+const showXTab = computed(() => showXFollowingTab.value || showXForYouTab.value);
+
+// 有効なタブのうち、xTimelineMode が無効なタブを指している場合にフォールバック
+const activeXMode = computed<'following' | 'for-you'>(() => {
+	if (xTimelineMode.value === 'for-you' && showXForYouTab.value) return 'for-you';
+	if (xTimelineMode.value === 'following' && showXFollowingTab.value) return 'following';
+	if (showXForYouTab.value) return 'for-you';
+	return 'following';
+});
 
 const xFollowingTimeline = useXTimeline('x/timeline', { polling: false });
+const xForYouTimeline = useXTimeline('x/for-you', { polling: false, sort: false });
+
+const xTabItems = computed(() => [
+	...(showXForYouTab.value ? [{ key: 'for-you' as const, label: i18n.ts._deck._columns.xForYouTimeline, icon: 'ti ti-sparkles' }] : []),
+	...(showXFollowingTab.value ? [{ key: 'following' as const, label: i18n.ts._deck._columns.xHomeTimeline, icon: 'ti ti-user-check' }] : []),
+]);
+
+async function fetchXTimeline(tl: typeof xFollowingTimeline) {
+	if (tl.tweets.value.length === 0) {
+		tl.loading.value = true;
+		await tl.fetchTimeline();
+		tl.loading.value = false;
+	}
+}
 
 watch(src, async (newSrc) => {
-	if (newSrc === 'x-following' && xFollowingTimeline.tweets.value.length === 0) {
-		xFollowingTimeline.loading.value = true;
-		await xFollowingTimeline.fetchTimeline();
-		xFollowingTimeline.loading.value = false;
+	if (newSrc === 'x-following') {
+		await fetchXTimeline(activeXMode.value === 'for-you' ? xForYouTimeline : xFollowingTimeline);
 	}
 }, { immediate: true });
 
-// X タブが非表示になったときに src をリセット
-watch(showXFollowingTab, (v) => {
+watch(xTimelineMode, async () => {
+	if (src.value === 'x-following') {
+		await fetchXTimeline(activeXMode.value === 'for-you' ? xForYouTimeline : xFollowingTimeline);
+	}
+});
+
+// X タブが両方非表示になったときに src をリセット
+watch(showXTab, (v) => {
 	if (!v && src.value === 'x-following') {
 		src.value = availableBasicTimelines()[0];
 	}
@@ -312,10 +371,15 @@ const headerActions = computed<PageHeaderItem[]>(() => {
 			}
 
 			menuItems.push({
-				icon: 'ti ti-brand-x',
+				icon: 'ti ti-user-check',
 				type: 'switch',
 				text: i18n.ts.showXFollowingTab,
 				ref: showXFollowingTab,
+			}, {
+				icon: 'ti ti-sparkles',
+				type: 'switch',
+				text: i18n.ts.showXForYouTab,
+				ref: showXForYouTab,
 			});
 
 			os.popupMenu(menuItems, ev.currentTarget ?? ev.target);
@@ -328,7 +392,7 @@ const headerActions = computed<PageHeaderItem[]>(() => {
 			text: i18n.ts.reload,
 			handler: () => {
 				if (src.value === 'x-following') {
-					xFollowingTimeline.reload();
+					(xTimelineMode.value === 'for-you' ? xForYouTimeline : xFollowingTimeline).reload();
 				} else {
 					tlComponent.value?.reloadTimeline();
 				}
@@ -352,9 +416,9 @@ const headerTabs = computed(() => [
 		icon: basicTimelineIconClass(tl),
 		iconOnly: true,
 	})),
-	...(showXFollowingTab.value ? [{
+	...(showXTab.value ? [{
 		key: 'x-following',
-		title: i18n.ts._deck._columns.xHomeTimeline,
+		title: 'X',
 		icon: 'ti ti-brand-x',
 		iconOnly: true,
 	}] : []),
@@ -419,6 +483,11 @@ definePage(() => ({
 	border-radius: var(--MI-radius);
 	overflow: clip;
 	background: var(--MI_THEME-panel);
+}
+
+.xModeTab {
+	padding: 4px 8px;
+	border-bottom: solid 0.5px var(--MI_THEME-divider);
 }
 
 .xError {

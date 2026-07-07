@@ -35,10 +35,10 @@ function sortByIdDesc(list: XTweet[]): XTweet[] {
 }
 
 export function useXTimeline(
-	timelineEndpoint: 'x/timeline',
-	options: { polling?: boolean } = {},
+	timelineEndpoint: 'x/timeline' | 'x/for-you',
+	options: { polling?: boolean; sort?: boolean } = {},
 ) {
-	const { polling = true } = options;
+	const { polling = true, sort = true } = options;
 	const tweets = ref<XTweet[]>([]);
 	const likedIds = ref<Set<string>>(new Set());
 	const loading = ref(false);
@@ -76,13 +76,27 @@ export function useXTimeline(
 		const isFirstFetch = tweets.value.length === 0;
 		try {
 			const fetched = await callApi<XTweet[]>(timelineEndpoint);
-			if (isFirstFetch) {
-				tweets.value = sortByIdDesc(fetched);
+			if (sort) {
+				// フォロー中TL: ID降順ソートで時系列を維持
+				if (isFirstFetch) {
+					tweets.value = sortByIdDesc(fetched);
+				} else {
+					const latestId = tweets.value[0].id;
+					const newer = fetched.filter(t => BigInt(t.id) > BigInt(latestId));
+					if (newer.length > 0) {
+						tweets.value = sortByIdDesc([...newer, ...tweets.value]);
+					}
+				}
 			} else {
-				const latestId = tweets.value[0].id;
-				const newer = fetched.filter(t => BigInt(t.id) > BigInt(latestId));
-				if (newer.length > 0) {
-					tweets.value = sortByIdDesc([...newer, ...tweets.value]);
+				// おすすめTL: ブリッジのアルゴリズム順を維持（ソートなし）
+				if (isFirstFetch) {
+					tweets.value = fetched;
+				} else {
+					const seen = new Set(tweets.value.map(t => t.id));
+					const newTweets = fetched.filter(t => !seen.has(t.id));
+					if (newTweets.length > 0) {
+						tweets.value = [...newTweets, ...tweets.value];
+					}
 				}
 			}
 			error.value = null;

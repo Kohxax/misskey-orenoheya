@@ -4949,6 +4949,10 @@ export interface Locale extends ILocale {
      */
     "showXFollowingTab": string;
     /**
+     * X おすすめタブを表示
+     */
+    "showXForYouTab": string;
+    /**
      * 外部サービス
      */
     "externalServices": string;
@@ -11197,6 +11201,10 @@ export interface Locale extends ILocale {
              * フォロー中
              */
             "xHomeTimeline": string;
+            /**
+             * おすすめ
+             */
+            "xForYouTimeline": string;
         };
     };
     "_dialog": {

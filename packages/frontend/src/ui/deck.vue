@@ -115,6 +115,7 @@ import XDirectColumn from '@/ui/deck/direct-column.vue';
 import XRoleTimelineColumn from '@/ui/deck/role-timeline-column.vue';
 import XChatColumn from '@/ui/deck/chat-column.vue';
 import XXHomeTimelineColumn from '@/ui/deck/x-home-timeline-column.vue';
+import XXForYouTimelineColumn from '@/ui/deck/x-for-you-timeline-column.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import { mainRouter } from '@/router.js';
 import { columns, layout, columnTypes, switchProfileMenu, addColumn as addColumnToStore, deleteProfile as deleteProfile_ } from '@/deck.js';
@@ -139,6 +140,7 @@ const columnComponents = {
 	roleTimeline: XRoleTimelineColumn,
 	chat: XChatColumn,
 	xHomeTimeline: XXHomeTimelineColumn,
+	xForYouTimeline: XXForYouTimelineColumn,
 };
 
 mainRouter.navHook = (path, flag): boolean => {

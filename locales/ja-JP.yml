@@ -1234,6 +1234,7 @@ hideRepliesToOthersInTimelineAll: "TLに現在フォロー中の人全員の返�
 confirmShowRepliesAll: "この操作は元に戻せません。本当にTLに現在フォロー中の人全員の返信を含めるようにしますか？"
 confirmHideRepliesAll: "この操作は元に戻せません。本当にTLに現在フォロー中の人全員の返信を含めないようにしますか？"
 showXFollowingTab: "X フォロー中タブを表示"
+showXForYouTab: "X おすすめタブを表示"
 externalServices: "外部サービス"
 sourceCode: "ソースコード"
 sourceCodeIsNotYetProvided: "ソースコードはまだ提供されていません。この問題の修正について管理者に問い合わせてください。"
@@ -2963,6 +2964,7 @@ _deck:
     roleTimeline: "ロールタイムライン"
     chat: "ダイレクトメッセージ"
     xHomeTimeline: "フォロー中"
+    xForYouTimeline: "おすすめ"
 
 _dialog:
   charactersExceeded: "最大文字数を超えています！ 現在 {current} / 制限 {max}"
