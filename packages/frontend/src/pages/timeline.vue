@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<div v-if="src === 'x-following'" :class="$style.xTl">
 			<MkTab v-if="xTabItems.length > 1" v-model="xTimelineMode" :tabs="xTabItems" :class="$style.xModeTab"/>
-			<component v-if="activeXMode === 'following'" :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="xFollowingTimeline.reload">
+			<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" v-if="activeXMode === 'following'" :refresher="xFollowingTimeline.reload">
 				<div v-if="xFollowingTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xFollowingTimeline.bridgeError.value.type}`]]">
 					<i :class="xFollowingTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xFollowingTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
 					<span>{{ xFollowingTimeline.bridgeError.value.message }}</span>
@@ -38,7 +38,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkLoading/>
 				</div>
 			</component>
-			<component v-else :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="xForYouTimeline.reload">
+			<component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" v-else :refresher="xForYouTimeline.reload">
 				<div v-if="xForYouTimeline.bridgeError.value" :class="[$style.xError, $style[`xError_${xForYouTimeline.bridgeError.value.type}`]]">
 					<i :class="xForYouTimeline.bridgeError.value.type === 'AUTH_ERROR' ? 'ti ti-lock-open-off' : xForYouTimeline.bridgeError.value.type === 'QUERY_ID_ERROR' ? 'ti ti-refresh-alert' : 'ti ti-alert-circle'"></i>
 					<span>{{ xForYouTimeline.bridgeError.value.message }}</span>

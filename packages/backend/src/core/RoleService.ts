@@ -135,11 +135,11 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	constructor(
 		private moduleRef: ModuleRef,
 
-		@Inject(DI.meta)
-		private meta: MiMeta,
-
 		@Inject(DI.config)
 		private config: Config,
+
+		@Inject(DI.meta)
+		private meta: MiMeta,
 
 		@Inject(DI.redisForTimelines)
 		private redisForTimelines: Redis.Redis,
@@ -382,7 +382,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const roles = await this.getUserRoles(userId);
 
 		function calc<T extends keyof RolePolicies>(name: T, aggregate: (values: RolePolicies[T][]) => RolePolicies[T]) {
-			if (roles.length === 0) return basePolicies[name];
+			if (roles.length === 0) return aggregate([basePolicies[name]]);
 
 			const policies = roles.map(role => role.policies[name] ?? { priority: 0, useDefault: true });
 
@@ -401,6 +401,8 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			return 'unavailable';
 		}
 
+		const serverMaxFileSizeMb = Math.floor(this.config.maxFileSize / (1024 * 1024));
+
 		return {
 			gtlAvailable: calc('gtlAvailable', vs => vs.some(v => v === true)),
 			ltlAvailable: this.config.disableLocalTimeline ? false : calc('ltlAvailable', vs => vs.some(v => v === true)),
@@ -418,7 +420,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			canHideAds: calc('canHideAds', vs => vs.some(v => v === true)),
 			canCreateChannel: calc('canCreateChannel', vs => vs.some(v => v === true)),
 			driveCapacityMb: calc('driveCapacityMb', vs => Math.max(...vs)),
-			maxFileSizeMb: calc('maxFileSizeMb', vs => Math.max(...vs)),
+			maxFileSizeMb: calc('maxFileSizeMb', vs => Math.min(serverMaxFileSizeMb, Math.max(...vs))),
 			alwaysMarkNsfw: calc('alwaysMarkNsfw', vs => vs.some(v => v === true)),
 			canUpdateBioMedia: calc('canUpdateBioMedia', vs => vs.some(v => v === true)),
 			pinLimit: calc('pinLimit', vs => Math.max(...vs)),

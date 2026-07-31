@@ -192,6 +192,9 @@ onMounted(() => {
 
 onUnmounted(() => {
 	if (connection) connection.dispose();
+	if (scrollContainer != null) {
+		scrollContainer.removeEventListener('scroll', onScrollContainerScroll);
+	}
 });
 
 defineExpose({

@@ -19,6 +19,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<template #header>{{ i18n.ts.options }}</template>
 
 			<div class="_gaps_m">
+				<div style="display: flex; gap: 8px;">
+					<MkInput v-model="rangeStartAt" type="datetime-local">
+						<template #label>{{ i18n.ts._search.postFrom }}</template>
+					</MkInput>
+					<MkInput v-model="rangeEndAt" type="datetime-local">
+						<template #label>{{ i18n.ts._search.postTo }}</template>
+					</MkInput>
+				</div>
+
 				<MkRadios
 					v-model="searchScope"
 					:options="searchScopeDef"
@@ -84,22 +93,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 				</div>
-				<div class="_gaps_s">
-					<MkInput
-						v-model="sinceDateInput"
-						type="date"
-					>
-						<template #label>{{ i18n.ts._search.searchSinceDate }}</template>
-						<template #prefix><i class="ti ti-calendar"></i></template>
-					</MkInput>
-					<MkInput
-						v-model="untilDateInput"
-						type="date"
-					>
-						<template #label>{{ i18n.ts._search.searchUntilDate }}</template>
-						<template #prefix><i class="ti ti-calendar"></i></template>
-					</MkInput>
-				</div>
 			</div>
 		</MkFoldableSection>
 		<div>
@@ -128,6 +121,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, markRaw, ref, shallowRef, toRef } from 'vue';
 import { host as localHost } from '@@/js/config.js';
 import type * as Misskey from 'misskey-js';
+import type { MkRadiosOption } from '@/components/MkRadios.vue';
 import { $i } from '@/i.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
@@ -142,7 +136,6 @@ import MkNotesTimeline from '@/components/MkNotesTimeline.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkUserCardMini from '@/components/MkUserCardMini.vue';
 import { Paginator } from '@/utility/paginator.js';
-import type { MkRadiosOption } from '@/components/MkRadios.vue';
 
 const props = withDefaults(defineProps<{
 	query?: string;
@@ -163,8 +156,8 @@ const paginator = shallowRef<Paginator<'notes/search'> | null>(null);
 
 const searchQuery = ref(toRef(props, 'query').value);
 const hostInput = ref(toRef(props, 'host').value);
-const sinceDateInput = ref<string | null>(null);
-const untilDateInput = ref<string | null>(null);
+const rangeStartAt = ref<string | null>(null);
+const rangeEndAt = ref<string | null>(null);
 
 const user = shallowRef<Misskey.entities.UserDetailed | null>(null);
 
@@ -223,8 +216,8 @@ type SearchParams = {
 	readonly query: string;
 	readonly host?: string;
 	readonly userId?: string;
-	readonly sinceDate?: number;
-	readonly untilDate?: number;
+	readonly rangeStartAt?: number | null;
+	readonly rangeEndAt?: number | null;
 };
 
 const fixHostIfLocal = (target: string | null | undefined) => {
@@ -232,18 +225,14 @@ const fixHostIfLocal = (target: string | null | undefined) => {
 	return target;
 };
 
-const dateParams = computed<{ sinceDate?: number; untilDate?: number }>(() => {
-	const result: { sinceDate?: number; untilDate?: number } = {};
-	if (sinceDateInput.value) {
-		result.sinceDate = new Date(sinceDateInput.value + 'T00:00:00').getTime();
-	}
-	if (untilDateInput.value) {
-		result.untilDate = new Date(untilDateInput.value + 'T23:59:59.999').getTime();
-	}
-	return result;
-});
+const searchRange = () => {
+	return {
+		rangeStartAt: rangeStartAt.value ? new Date(rangeStartAt.value).getTime() : null,
+		rangeEndAt: rangeEndAt.value ? new Date(rangeEndAt.value).getTime() : null,
+	};
+};
 
-const hasDateFilter = computed(() => !!(sinceDateInput.value || untilDateInput.value));
+const hasDateFilter = computed(() => !!(rangeStartAt.value || rangeEndAt.value));
 
 const searchParams = computed<SearchParams | null>(() => {
 	const trimmedQuery = searchQuery.value.trim();
@@ -256,7 +245,7 @@ const searchParams = computed<SearchParams | null>(() => {
 			query: trimmedQuery,
 			host: fixHostIfLocal(user.value.host),
 			userId: user.value.id,
-			...dateParams.value,
+			...searchRange(),
 		};
 	}
 
@@ -271,7 +260,7 @@ const searchParams = computed<SearchParams | null>(() => {
 		return {
 			query: trimmedQuery,
 			host: fixHostIfLocal(trimmedHost),
-			...dateParams.value,
+			...searchRange(),
 		};
 	}
 
@@ -279,13 +268,13 @@ const searchParams = computed<SearchParams | null>(() => {
 		return {
 			query: trimmedQuery,
 			host: '.',
-			...dateParams.value,
+			...searchRange(),
 		};
 	}
 
 	return {
 		query: trimmedQuery,
-		...dateParams.value,
+		...searchRange(),
 	};
 });
 

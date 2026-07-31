@@ -78,18 +78,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 	</div>
 </div>
-
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import PhotoSwipeLightbox from 'photoswipe/lightbox';
-import PhotoSwipe from 'photoswipe';
-import 'photoswipe/style.css';
-import * as os from '@/os.js';
 import { char2twemojiFilePath, char2fluentEmojiFilePath } from '@@/js/emoji-base.js';
-import { prefer } from '@/preferences.js';
 import type { XTweet, XMediaItem } from '@/utility/x-types.js';
+import type { Content } from '@/components/MkLightbox.item.vue';
+import { prefer } from '@/preferences.js';
+import * as os from '@/os.js';
 import MkUrlPreview from '@/components/MkUrlPreview.vue';
 
 const props = defineProps<{
@@ -144,6 +141,7 @@ function segmentText(str: string): TextSeg[] {
 	if (last < str.length) result.push(...splitByEmoji(str.slice(last)));
 	return result;
 }
+
 const profileUrl = computed(() =>
 	`https://x.com/${props.tweet.author.screenName}`,
 );
@@ -185,53 +183,32 @@ function getLargeUrl(url: string): string {
 
 async function openLightbox(photoIndex: number): Promise<void> {
 	const photos = props.tweet.media.filter(m => m.type === 'photo');
-	const sources = await Promise.all(
-		photos.map(m => {
+	const contents = await Promise.all(
+		photos.map(async (m, idx): Promise<Content> => {
 			const url = getLargeUrl(m.url);
-			return new Promise<{ src: string; width: number; height: number }>(resolve => {
+			const { width, height } = await new Promise<{ width: number; height: number }>(resolve => {
 				const img = new Image();
-				img.onload = () => resolve({ src: url, width: img.naturalWidth, height: img.naturalHeight });
-				img.onerror = () => resolve({ src: url, width: 1200, height: 675 });
+				img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+				img.onerror = () => resolve({ width: 1200, height: 675 });
 				img.src = url;
 			});
+			return {
+				id: `xtweet:${props.tweet.id}:${idx}`,
+				type: 'image',
+				url,
+				thumbnailUrl: m.thumbUrl,
+				width,
+				height,
+			};
 		}),
 	);
-	const lb = new PhotoSwipeLightbox({
-		dataSource: sources,
-		pswpModule: PhotoSwipe,
-		loop: false,
-		initialZoomLevel: 'fit',
-		secondaryZoomLevel: 2,
-		maxZoomLevel: 2,
-		showAnimationDuration: 100,
-		hideAnimationDuration: 100,
-		imageClickAction: 'close',
-		tapAction: 'toggle-controls',
-		padding: window.innerWidth > 500
-			? { top: 32, bottom: 90, left: 32, right: 32 }
-			: { top: 0, bottom: 78, left: 0, right: 0 },
+
+	const { dispose } = await os.popupAsyncWithDialog(import('@/components/MkLightbox.vue').then(x => x.default), {
+		defaultIndex: photoIndex,
+		contents,
+	}, {
+		closed: () => dispose(),
 	});
-
-	const popstateHandler = (): void => {
-		if (lb.pswp && lb.pswp.isOpen) {
-			lb.pswp.close();
-		}
-	};
-
-	lb.on('afterInit', () => {
-		window.history.pushState(null, '', '#pswp');
-		window.addEventListener('popstate', popstateHandler);
-	});
-
-	lb.on('destroy', () => {
-		window.removeEventListener('popstate', popstateHandler);
-		if (window.location.hash === '#pswp') {
-			window.history.back();
-		}
-	});
-
-	lb.init();
-	lb.loadAndOpen(photoIndex);
 }
 
 function openVideo(_item: XMediaItem): void {

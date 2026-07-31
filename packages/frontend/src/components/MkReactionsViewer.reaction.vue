@@ -39,6 +39,7 @@ import { prefer } from '@/preferences.js';
 import { DI } from '@/di.js';
 import { noteEvents } from '@/composables/use-note-capture.js';
 import { mute as muteEmoji, unmute as unmuteEmoji, checkMuted as isEmojiMuted } from '@/utility/emoji-mute.js';
+import { addToEmojiPalette } from '@/utility/emoji-palette.js';
 import { haptic } from '@/utility/haptic.js';
 
 const props = defineProps<{
@@ -77,7 +78,7 @@ const canToggle = computed(() => {
 const canGetInfo = computed(() => !props.reaction.match(/@\w/) && props.reaction.includes(':'));
 const isLocalCustomEmoji = props.reaction[0] === ':' && props.reaction.includes('@.');
 
-async function chooseAlternative(ev) {
+async function chooseAlternative(ev: MouseEvent) {
 	if (!alternative.value) return;
 	if ($i == null) return;
 
@@ -116,7 +117,7 @@ async function chooseAlternative(ev) {
 	});
 }
 
-async function toggleReaction(ev) {
+async function toggleReaction(ev: MouseEvent) {
 	if (!canToggle.value) {
 		chooseAlternative(ev);
 		return;
@@ -252,6 +253,16 @@ async function menu(ev: PointerEvent) {
 					if (canceled) return;
 					muteEmoji(props.reaction);
 				});
+			},
+		});
+	}
+
+	if (canToggle.value) {
+		menuItems.push({
+			text: i18n.ts.addToEmojiPalette,
+			icon: 'ti ti-palette',
+			action: () => {
+				addToEmojiPalette(isLocalCustomEmoji ? `:${emojiName.value}:` : props.reaction);
 			},
 		});
 	}
