@@ -429,6 +429,10 @@ export const packedUserDetailedNotMeOnlySchema = {
 			type: 'boolean',
 			nullable: false, optional: true,
 		},
+		isNonImageMuted: {
+			type: 'boolean',
+			nullable: false, optional: true,
+		},
 		isRenoteMuted: {
 			type: 'boolean',
 			nullable: false, optional: true,

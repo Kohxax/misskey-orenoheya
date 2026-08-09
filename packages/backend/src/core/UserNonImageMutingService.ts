@@ -5,9 +5,9 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
-import type { MiMuting } from '@/models/_.js';
-import { MiMuting as Muting } from '@/models/Muting.js';
-import { MiNonImageMuting } from '@/models/NonImageMuting.js';
+import type { MiNonImageMuting } from '@/models/_.js';
+import { MiNonImageMuting as NonImageMuting } from '@/models/NonImageMuting.js';
+import { MiMuting } from '@/models/Muting.js';
 import { acquireUserMuteLock } from '@/misc/acquire-user-mute-lock.js';
 import { IdService } from '@/core/IdService.js';
 import type { MiUser } from '@/models/User.js';
@@ -16,7 +16,7 @@ import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
-export class UserMutingService {
+export class UserNonImageMutingService {
 	constructor(
 		@Inject(DI.db)
 		private db: DataSource,
@@ -30,11 +30,13 @@ export class UserMutingService {
 	public async mute(user: MiUser, target: MiUser, expiresAt: Date | null = null): Promise<boolean> {
 		const created = await this.db.transaction(async manager => {
 			await acquireUserMuteLock(manager, user.id, target.id);
-			if (await manager.getRepository(Muting).existsBy({ muterId: user.id, muteeId: target.id })) return false;
-			await manager.getRepository(MiNonImageMuting).delete({ muterId: user.id, muteeId: target.id });
-			await manager.getRepository(Muting).insert({
+			const existing = await manager.getRepository(NonImageMuting).findOneBy({ muterId: user.id, muteeId: target.id });
+			if (existing && (existing.expiresAt == null || existing.expiresAt.getTime() > Date.now())) return false;
+			if (existing) await manager.getRepository(NonImageMuting).delete(existing.id);
+			await manager.getRepository(MiMuting).delete({ muterId: user.id, muteeId: target.id });
+			await manager.getRepository(NonImageMuting).insert({
 				id: this.idService.gen(),
-				expiresAt: expiresAt ?? null,
+				expiresAt,
 				muterId: user.id,
 				muteeId: target.id,
 			});
@@ -50,19 +52,18 @@ export class UserMutingService {
 	}
 
 	@bindThis
-	public async unmute(mutings: MiMuting[]): Promise<void> {
+	public async unmute(mutings: MiNonImageMuting[]): Promise<void> {
 		if (mutings.length === 0) return;
 
 		await this.db.transaction(async manager => {
 			for (const muting of [...mutings].sort((a, b) => `${a.muterId}:${a.muteeId}`.localeCompare(`${b.muterId}:${b.muteeId}`))) {
 				await acquireUserMuteLock(manager, muting.muterId, muting.muteeId);
 			}
-			await manager.getRepository(Muting).delete({ id: In(mutings.map(muting => muting.id)) });
+			await manager.getRepository(NonImageMuting).delete({ id: In(mutings.map(muting => muting.id)) });
 		});
 
-		const muterIds = [...new Set(mutings.map(m => m.muterId))];
-		for (const muterId of muterIds) {
-			await this.cacheService.userMutingsCache.delete(muterId);
+		for (const muterId of new Set(mutings.map(muting => muting.muterId))) {
+			await this.cacheService.nonImageMutingsCache.delete(muterId);
 		}
 	}
 }

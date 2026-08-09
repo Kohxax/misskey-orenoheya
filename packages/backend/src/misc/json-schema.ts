@@ -20,6 +20,7 @@ import { packedDriveFileSchema } from '@/models/json-schema/drive-file.js';
 import { packedDriveFolderSchema } from '@/models/json-schema/drive-folder.js';
 import { packedFollowingSchema } from '@/models/json-schema/following.js';
 import { packedMutingSchema } from '@/models/json-schema/muting.js';
+import { packedNonImageMutingSchema } from '@/models/json-schema/non-image-muting.js';
 import { packedRenoteMutingSchema } from '@/models/json-schema/renote-muting.js';
 import { packedBlockingSchema } from '@/models/json-schema/blocking.js';
 import { packedNoteReactionSchema, packedNoteReactionWithNoteSchema } from '@/models/json-schema/note-reaction.js';
@@ -101,6 +102,7 @@ export const refs = {
 	DriveFolder: packedDriveFolderSchema,
 	Following: packedFollowingSchema,
 	Muting: packedMutingSchema,
+	NonImageMuting: packedNonImageMutingSchema,
 	RenoteMuting: packedRenoteMutingSchema,
 	Blocking: packedBlockingSchema,
 	Hashtag: packedHashtagSchema,

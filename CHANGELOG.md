@@ -20,6 +20,7 @@
 - Feat: 条件に一致したURLプレビューのサムネイルを隠すことができるように  
   (Based on https://github.com/MisskeyIO/misskey/pull/214)
 - Enhance: 依存関係の更新
+- Feat: 特定ユーザーの画像以外の投稿をミュートできるように
 
 ### Client
 - 2025.4.0 以前の設定情報の移行処理が削除されました

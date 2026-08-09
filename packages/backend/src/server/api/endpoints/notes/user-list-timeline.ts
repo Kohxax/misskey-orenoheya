@@ -123,6 +123,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				limit: ps.limit,
 				allowPartial: ps.allowPartial,
 				me,
+				filterNonImageMutedNotes: true,
 				useDbFallback: this.serverSettings.enableFanoutTimelineDbFallback,
 				redisTimelines: ps.withFiles ? [`userListTimelineWithFiles:${list.id}`] : [`userListTimeline:${list.id}`],
 				alwaysIncludeMyNotes: true,
@@ -187,6 +188,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		this.queryService.generateVisibilityQuery(query, me);
 		this.queryService.generateBaseNoteFilteringQuery(query, me);
+		this.queryService.generateNonImageMutedUserQueryForNotes(query, me);
 		this.queryService.generateMutedUserRenotesQueryForNotes(query, me);
 
 		// -- ミュートされたチャンネルのリノート対策

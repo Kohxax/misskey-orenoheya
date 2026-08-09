@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import _Ajv from 'ajv';
 import { ModuleRef } from '@nestjs/core';
-import { In } from 'typeorm';
+import { In, IsNull, MoreThan } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import type { Packed } from '@/misc/json-schema.js';
@@ -32,6 +32,7 @@ import type {
 	MiUserNotePining,
 	MiUserProfile,
 	MutingsRepository,
+	NonImageMutingsRepository,
 	RenoteMutingsRepository,
 	UserMemoRepository,
 	UserNotePiningsRepository,
@@ -80,6 +81,7 @@ export type UserRelation = {
 	isBlocking: boolean
 	isBlocked: boolean
 	isMuted: boolean
+	isNonImageMuted: boolean
 	isRenoteMuted: boolean
 };
 
@@ -125,6 +127,9 @@ export class UserEntityService implements OnModuleInit {
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
+
+		@Inject(DI.nonImageMutingsRepository)
+		private nonImageMutingsRepository: NonImageMutingsRepository,
 
 		@Inject(DI.renoteMutingsRepository)
 		private renoteMutingsRepository: RenoteMutingsRepository,
@@ -175,6 +180,7 @@ export class UserEntityService implements OnModuleInit {
 			isBlocking,
 			isBlocked,
 			isMuted,
+			isNonImageMuted,
 			isRenoteMuted,
 		] = await Promise.all([
 			this.followingsRepository.findOneBy({
@@ -217,6 +223,12 @@ export class UserEntityService implements OnModuleInit {
 					muteeId: target,
 				},
 			}),
+			this.nonImageMutingsRepository.exists({
+				where: [
+					{ muterId: me, muteeId: target, expiresAt: IsNull() },
+					{ muterId: me, muteeId: target, expiresAt: MoreThan(new Date()) },
+				],
+			}),
 			this.renoteMutingsRepository.exists({
 				where: {
 					muterId: me,
@@ -235,6 +247,7 @@ export class UserEntityService implements OnModuleInit {
 			isBlocking,
 			isBlocked,
 			isMuted,
+			isNonImageMuted: !isMuted && isNonImageMuted,
 			isRenoteMuted,
 		};
 	}
@@ -249,6 +262,7 @@ export class UserEntityService implements OnModuleInit {
 			blockers,
 			blockees,
 			muters,
+			nonImageMuters,
 			renoteMuters,
 		] = await Promise.all([
 			this.followingsRepository.findBy({ followerId: me })
@@ -283,6 +297,12 @@ export class UserEntityService implements OnModuleInit {
 				.where('m.muterId = :me', { me })
 				.getRawMany<{ m_muteeId: string }>()
 				.then(it => it.map(it => it.m_muteeId)),
+			this.nonImageMutingsRepository.createQueryBuilder('m')
+				.select('m.muteeId')
+				.where('m.muterId = :me', { me })
+				.andWhere('(m.expiresAt IS NULL OR m.expiresAt > :now)', { now: new Date() })
+				.getRawMany<{ m_muteeId: string }>()
+				.then(it => it.map(it => it.m_muteeId)),
 			this.renoteMutingsRepository.createQueryBuilder('m')
 				.select('m.muteeId')
 				.where('m.muterId = :me', { me })
@@ -306,6 +326,7 @@ export class UserEntityService implements OnModuleInit {
 						isBlocking: blockers.includes(target),
 						isBlocked: blockees.includes(target),
 						isMuted: muters.includes(target),
+						isNonImageMuted: !muters.includes(target) && nonImageMuters.includes(target),
 						isRenoteMuted: renoteMuters.includes(target),
 					},
 				];
@@ -646,6 +667,7 @@ export class UserEntityService implements OnModuleInit {
 				isBlocking: relation.isBlocking,
 				isBlocked: relation.isBlocked,
 				isMuted: relation.isMuted,
+				isNonImageMuted: relation.isNonImageMuted,
 				isRenoteMuted: relation.isRenoteMuted,
 				notify: relation.following?.notify ?? 'none',
 				withReplies: relation.following?.withReplies ?? false,

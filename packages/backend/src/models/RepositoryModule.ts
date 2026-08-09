@@ -39,6 +39,7 @@ import {
 	MiMeta,
 	MiModerationLog,
 	MiMuting,
+	MiNonImageMuting,
 	MiNote,
 	MiNoteFavorite,
 	MiNoteReaction,
@@ -271,6 +272,12 @@ const $metasRepository: Provider = {
 const $mutingsRepository: Provider = {
 	provide: DI.mutingsRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiMuting).extend(miRepository as MiRepository<MiMuting>),
+	inject: [DI.db],
+};
+
+const $nonImageMutingsRepository: Provider = {
+	provide: DI.nonImageMutingsRepository,
+	useFactory: (db: DataSource) => db.getRepository(MiNonImageMuting).extend(miRepository as MiRepository<MiNonImageMuting>),
 	inject: [DI.db],
 };
 
@@ -578,6 +585,7 @@ const $reversiGamesRepository: Provider = {
 		$driveFoldersRepository,
 		$metasRepository,
 		$mutingsRepository,
+		$nonImageMutingsRepository,
 		$renoteMutingsRepository,
 		$blockingsRepository,
 		$swSubscriptionsRepository,
@@ -656,6 +664,7 @@ const $reversiGamesRepository: Provider = {
 		$driveFoldersRepository,
 		$metasRepository,
 		$mutingsRepository,
+		$nonImageMutingsRepository,
 		$renoteMutingsRepository,
 		$blockingsRepository,
 		$swSubscriptionsRepository,

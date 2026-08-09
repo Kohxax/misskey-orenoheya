@@ -5,7 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { BlockingsRepository, FollowingsRepository, MutingsRepository, RenoteMutingsRepository, MiUserProfile, UserProfilesRepository, UsersRepository, MiFollowing } from '@/models/_.js';
+import type { BlockingsRepository, FollowingsRepository, MutingsRepository, NonImageMutingsRepository, RenoteMutingsRepository, MiUserProfile, UserProfilesRepository, UsersRepository, MiFollowing } from '@/models/_.js';
 import { MemoryKVCache, RedisKVCache } from '@/misc/cache.js';
 import type { MiLocalUser, MiUser } from '@/models/User.js';
 import { DI } from '@/di-symbols.js';
@@ -13,6 +13,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import type { NonImageMutingMap } from '@/misc/is-non-image-muted.js';
 
 @Injectable()
 export class CacheService implements OnApplicationShutdown {
@@ -22,6 +23,7 @@ export class CacheService implements OnApplicationShutdown {
 	public uriPersonCache: MemoryKVCache<MiUser | null>;
 	public userProfileCache: RedisKVCache<MiUserProfile>;
 	public userMutingsCache: RedisKVCache<Set<string>>;
+	public nonImageMutingsCache: RedisKVCache<NonImageMutingMap>;
 	public userBlockingCache: RedisKVCache<Set<string>>;
 	public userBlockedCache: RedisKVCache<Set<string>>; // NOTE: 「被」Blockキャッシュ
 	public renoteMutingsCache: RedisKVCache<Set<string>>;
@@ -42,6 +44,9 @@ export class CacheService implements OnApplicationShutdown {
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
+
+		@Inject(DI.nonImageMutingsRepository)
+		private nonImageMutingsRepository: NonImageMutingsRepository,
 
 		@Inject(DI.blockingsRepository)
 		private blockingsRepository: BlockingsRepository,
@@ -78,6 +83,17 @@ export class CacheService implements OnApplicationShutdown {
 			}).then(xs => new Set(xs.map(x => x.muteeId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+		});
+
+		this.nonImageMutingsCache = new RedisKVCache<NonImageMutingMap>(this.redisClient, 'nonImageMutings', {
+			lifetime: 1000 * 60 * 30,
+			memoryCacheLifetime: 1000 * 60,
+			fetcher: (key) => this.nonImageMutingsRepository.find({
+				where: { muterId: key },
+				select: { muteeId: true, expiresAt: true },
+			}).then(mutings => new Map(mutings.map(muting => [muting.muteeId, muting.expiresAt?.getTime() ?? null]))),
+			toRedisConverter: (value) => JSON.stringify(Array.from(value.entries())),
+			fromRedisConverter: (value) => new Map(JSON.parse(value)),
 		});
 
 		this.userBlockingCache = new RedisKVCache<Set<string>>(this.redisClient, 'userBlocking', {
@@ -203,6 +219,7 @@ export class CacheService implements OnApplicationShutdown {
 		this.uriPersonCache.dispose();
 		this.userProfileCache.dispose();
 		this.userMutingsCache.dispose();
+		this.nonImageMutingsCache.dispose();
 		this.userBlockingCache.dispose();
 		this.userBlockedCache.dispose();
 		this.renoteMutingsCache.dispose();

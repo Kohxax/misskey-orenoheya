@@ -2027,6 +2027,10 @@ declare namespace entities {
         MuteListResponse,
         MyAppsRequest,
         MyAppsResponse,
+        NonImageMuteCreateRequest,
+        NonImageMuteDeleteRequest,
+        NonImageMuteListRequest,
+        NonImageMuteListResponse,
         NotesRequest,
         NotesResponse,
         NotesChildrenRequest,
@@ -2199,6 +2203,8 @@ declare namespace entities {
         V2AdminEmojiListRequest,
         V2AdminEmojiListResponse,
         VerifyEmailRequest,
+        XLikeRequest,
+        XUnlikeRequest,
         Error_2 as Error,
         UserLite,
         UserDetailedNotMeOnly,
@@ -2223,6 +2229,7 @@ declare namespace entities {
         DriveFolder,
         Following,
         Muting,
+        NonImageMuting,
         RenoteMuting,
         Blocking,
         Hashtag,
@@ -2925,6 +2932,21 @@ type MyAppsRequest = operations['my___apps']['requestBody']['content']['applicat
 
 // @public (undocumented)
 type MyAppsResponse = operations['my___apps']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type NonImageMuteCreateRequest = operations['non-image-mute___create']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NonImageMuteDeleteRequest = operations['non-image-mute___delete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NonImageMuteListRequest = operations['non-image-mute___list']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NonImageMuteListResponse = operations['non-image-mute___list']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type NonImageMuting = components['schemas']['NonImageMuting'];
 
 // @public (undocumented)
 type Note = components['schemas']['Note'];
@@ -3767,6 +3789,12 @@ type V2AdminEmojiListResponse = operations['v2___admin___emoji___list']['respons
 
 // @public (undocumented)
 type VerifyEmailRequest = operations['verify-email']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type XLikeRequest = operations['x___like']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type XUnlikeRequest = operations['x___unlike']['requestBody']['content']['application/json'];
 
 // Warnings were encountered during analysis:
 //

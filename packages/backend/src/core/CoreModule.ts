@@ -63,6 +63,7 @@ import { UserFollowingService } from './UserFollowingService.js';
 import { UserKeypairService } from './UserKeypairService.js';
 import { UserListService } from './UserListService.js';
 import { UserMutingService } from './UserMutingService.js';
+import { UserNonImageMutingService } from './UserNonImageMutingService.js';
 import { UserRenoteMutingService } from './UserRenoteMutingService.js';
 import { UserSuspendService } from './UserSuspendService.js';
 import { UserAuthService } from './UserAuthService.js';
@@ -116,6 +117,7 @@ import { InstanceEntityService } from './entities/InstanceEntityService.js';
 import { InviteCodeEntityService } from './entities/InviteCodeEntityService.js';
 import { ModerationLogEntityService } from './entities/ModerationLogEntityService.js';
 import { MutingEntityService } from './entities/MutingEntityService.js';
+import { NonImageMutingEntityService } from './entities/NonImageMutingEntityService.js';
 import { RenoteMutingEntityService } from './entities/RenoteMutingEntityService.js';
 import { NoteEntityService } from './entities/NoteEntityService.js';
 import { NoteFavoriteEntityService } from './entities/NoteFavoriteEntityService.js';
@@ -209,6 +211,7 @@ const $UserFollowingService: Provider = { provide: 'UserFollowingService', useEx
 const $UserKeypairService: Provider = { provide: 'UserKeypairService', useExisting: UserKeypairService };
 const $UserListService: Provider = { provide: 'UserListService', useExisting: UserListService };
 const $UserMutingService: Provider = { provide: 'UserMutingService', useExisting: UserMutingService };
+const $UserNonImageMutingService: Provider = { provide: 'UserNonImageMutingService', useExisting: UserNonImageMutingService };
 const $UserRenoteMutingService: Provider = { provide: 'UserRenoteMutingService', useExisting: UserRenoteMutingService };
 const $UserSearchService: Provider = { provide: 'UserSearchService', useExisting: UserSearchService };
 const $UserSuspendService: Provider = { provide: 'UserSuspendService', useExisting: UserSuspendService };
@@ -269,6 +272,7 @@ const $InstanceEntityService: Provider = { provide: 'InstanceEntityService', use
 const $InviteCodeEntityService: Provider = { provide: 'InviteCodeEntityService', useExisting: InviteCodeEntityService };
 const $ModerationLogEntityService: Provider = { provide: 'ModerationLogEntityService', useExisting: ModerationLogEntityService };
 const $MutingEntityService: Provider = { provide: 'MutingEntityService', useExisting: MutingEntityService };
+const $NonImageMutingEntityService: Provider = { provide: 'NonImageMutingEntityService', useExisting: NonImageMutingEntityService };
 const $RenoteMutingEntityService: Provider = { provide: 'RenoteMutingEntityService', useExisting: RenoteMutingEntityService };
 const $NoteEntityService: Provider = { provide: 'NoteEntityService', useExisting: NoteEntityService };
 const $NoteFavoriteEntityService: Provider = { provide: 'NoteFavoriteEntityService', useExisting: NoteFavoriteEntityService };
@@ -362,6 +366,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		UserKeypairService,
 		UserListService,
 		UserMutingService,
+		UserNonImageMutingService,
 		UserRenoteMutingService,
 		UserSearchService,
 		UserSuspendService,
@@ -422,6 +427,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		InviteCodeEntityService,
 		ModerationLogEntityService,
 		MutingEntityService,
+		NonImageMutingEntityService,
 		RenoteMutingEntityService,
 		NoteEntityService,
 		NoteFavoriteEntityService,
@@ -513,6 +519,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$UserKeypairService,
 		$UserListService,
 		$UserMutingService,
+		$UserNonImageMutingService,
 		$UserRenoteMutingService,
 		$UserSearchService,
 		$UserSuspendService,
@@ -573,6 +580,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$InviteCodeEntityService,
 		$ModerationLogEntityService,
 		$MutingEntityService,
+		$NonImageMutingEntityService,
 		$RenoteMutingEntityService,
 		$NoteEntityService,
 		$NoteFavoriteEntityService,
@@ -664,6 +672,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		UserKeypairService,
 		UserListService,
 		UserMutingService,
+		UserNonImageMutingService,
 		UserRenoteMutingService,
 		UserSearchService,
 		UserSuspendService,
@@ -723,6 +732,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		InviteCodeEntityService,
 		ModerationLogEntityService,
 		MutingEntityService,
+		NonImageMutingEntityService,
 		RenoteMutingEntityService,
 		NoteEntityService,
 		NoteFavoriteEntityService,
@@ -814,6 +824,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$UserKeypairService,
 		$UserListService,
 		$UserMutingService,
+		$UserNonImageMutingService,
 		$UserRenoteMutingService,
 		$UserSearchService,
 		$UserSuspendService,
@@ -872,6 +883,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$InviteCodeEntityService,
 		$ModerationLogEntityService,
 		$MutingEntityService,
+		$NonImageMutingEntityService,
 		$RenoteMutingEntityService,
 		$NoteEntityService,
 		$NoteFavoriteEntityService,

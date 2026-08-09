@@ -52,6 +52,7 @@ export class ChannelChannel extends Channel {
 
 		if (!this.isNoteVisibleForMe(note)) return;
 		if (this.isNoteMutedOrBlocked(note)) return;
+		if (this.isNoteNonImageMuted(note)) return;
 
 		const filtered = await this.noteStreamingHidingService.filter(note, this.user?.id ?? null);
 		if (!filtered) return;

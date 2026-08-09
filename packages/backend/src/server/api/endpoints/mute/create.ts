@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import ms from 'ms';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { MutingsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { UserMutingService } from '@/core/UserMutingService.js';
 import { ApiError } from '../../error.js';
@@ -62,9 +60,6 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
-		@Inject(DI.mutingsRepository)
-		private mutingsRepository: MutingsRepository,
-
 		private getterService: GetterService,
 		private userMutingService: UserMutingService,
 	) {
@@ -82,23 +77,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw err;
 			});
 
-			// Check if already muting
-			const exist = await this.mutingsRepository.exists({
-				where: {
-					muterId: muter.id,
-					muteeId: mutee.id,
-				},
-			});
-
-			if (exist) {
-				throw new ApiError(meta.errors.alreadyMuting);
-			}
-
 			if (ps.expiresAt && ps.expiresAt <= Date.now()) {
 				return;
 			}
 
-			await this.userMutingService.mute(muter, mutee, ps.expiresAt ? new Date(ps.expiresAt) : null);
+			if (!await this.userMutingService.mute(muter, mutee, ps.expiresAt ? new Date(ps.expiresAt) : null)) {
+				throw new ApiError(meta.errors.alreadyMuting);
+			}
 		});
 	}
 }

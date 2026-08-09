@@ -9,7 +9,7 @@ import { IsNull, In, MoreThan, Not } from 'typeorm';
 import { bindThis } from '@/decorators.js';
 import { DI } from '@/di-symbols.js';
 import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.js';
-import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MiMeta, MutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.js';
+import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MiMeta, MutingsRepository, NonImageMutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.js';
 import type { RelationshipJobData, ThinUser } from '@/queue/types.js';
 
 import { IdService } from '@/core/IdService.js';
@@ -44,6 +44,9 @@ export class AccountMoveService {
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
+
+		@Inject(DI.nonImageMutingsRepository)
+		private nonImageMutingsRepository: NonImageMutingsRepository,
 
 		@Inject(DI.userListMembershipsRepository)
 		private userListMembershipsRepository: UserListMembershipsRepository,
@@ -123,6 +126,7 @@ export class AccountMoveService {
 			await Promise.all([
 				this.copyBlocking(src, dst),
 				this.copyMutings(src, dst),
+				this.copyNonImageMutings(src, dst),
 				this.copyRoles(src, dst),
 				this.updateLists(src, dst),
 				this.antennaService.onMoveAccount(src, dst),
@@ -205,6 +209,27 @@ export class AccountMoveService {
 
 		const arrayToInsert = Array.from(newMutings.entries()).map(entry => ({ ...entry[1], id: entry[0] }));
 		await this.mutingsRepository.insert(arrayToInsert);
+	}
+
+	@bindThis
+	public async copyNonImageMutings(src: ThinUser, dst: ThinUser): Promise<void> {
+		const oldMutings = await this.nonImageMutingsRepository.findBy([
+			{ muteeId: src.id, expiresAt: IsNull() },
+			{ muteeId: src.id, expiresAt: MoreThan(new Date()) },
+		]);
+		if (oldMutings.length === 0) return;
+
+		const existingMuterIds = await this.nonImageMutingsRepository.findBy({ muteeId: dst.id })
+			.then(mutings => new Set(mutings.map(muting => muting.muterId)));
+		const rows = oldMutings
+			.filter(muting => !existingMuterIds.has(muting.muterId))
+			.map(muting => ({
+				id: this.idService.gen(),
+				muterId: muting.muterId,
+				muteeId: dst.id,
+				expiresAt: muting.expiresAt,
+			}));
+		if (rows.length > 0) await this.nonImageMutingsRepository.insert(rows);
 	}
 
 	@bindThis

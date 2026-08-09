@@ -21,6 +21,7 @@ import { isReply } from '@/misc/is-reply.js';
 import { isInstanceMuted } from '@/misc/is-instance-muted.js';
 import { ChannelMutingService } from '@/core/ChannelMutingService.js';
 import { isChannelRelated } from '@/misc/is-channel-related.js';
+import { isNonImageMuted } from '@/misc/is-non-image-muted.js';
 
 type NoteFilter = (note: MiNote) => boolean;
 
@@ -36,6 +37,7 @@ type TimelineOptions = {
 	alwaysIncludeMyNotes?: boolean;
 	ignoreAuthorFromBlock?: boolean;
 	ignoreAuthorFromMute?: boolean;
+	filterNonImageMutedNotes?: boolean;
 	ignoreAuthorFromInstanceBlock?: boolean;
 	ignoreAuthorChannelFromMute?: boolean;
 	excludeNoFiles?: boolean;
@@ -113,12 +115,14 @@ export class FanoutTimelineEndpointService {
 				const [
 					userIdsWhoMeMuting,
 					userIdsWhoMeMutingRenotes,
+					nonImageMutings,
 					userIdsWhoBlockingMe,
 					userMutedInstances,
 					userMutedChannels,
 				] = await Promise.all([
 					this.cacheService.userMutingsCache.fetch(ps.me.id),
 					this.cacheService.renoteMutingsCache.fetch(ps.me.id),
+					this.cacheService.nonImageMutingsCache.fetch(ps.me.id),
 					this.cacheService.userBlockedCache.fetch(ps.me.id),
 					this.cacheService.userProfileCache.fetch(me.id).then(p => new Set(p.mutedInstances)),
 					this.channelMutingService.mutingChannelsCache.fetch(me.id),
@@ -131,6 +135,7 @@ export class FanoutTimelineEndpointService {
 					if (isUserRelated(note.renote, userIdsWhoBlockingMe, ps.ignoreAuthorFromBlock)) return false;
 					if (isUserRelated(note.renote, userIdsWhoMeMuting, ps.ignoreAuthorFromMute)) return false;
 					if (!ps.ignoreAuthorFromMute && isRenote(note) && !isQuote(note) && userIdsWhoMeMutingRenotes.has(note.userId)) return false;
+					if (ps.filterNonImageMutedNotes && isNonImageMuted(note, nonImageMutings)) return false;
 					if (isInstanceMuted(note, userMutedInstances)) return false;
 					if (isChannelRelated(note, userMutedChannels, ps.ignoreAuthorChannelFromMute)) return false;
 

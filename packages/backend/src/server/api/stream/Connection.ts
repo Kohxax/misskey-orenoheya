@@ -39,6 +39,7 @@ import type { ChannelRequest } from './channel.js';
 import type { ChannelConstructor } from './channel.js';
 import type Channel from './channel.js';
 import type { EventEmitter } from 'events';
+import type { NonImageMutingMap } from '@/misc/is-non-image-muted.js';
 
 const MAX_CHANNELS_PER_CONNECTION = 32;
 
@@ -59,6 +60,7 @@ export default class Connection {
 	public followingChannels: Set<string> = new Set();
 	public mutingChannels: Set<string> = new Set();
 	public userIdsWhoMeMuting: Set<string> = new Set();
+	public nonImageMutings: NonImageMutingMap = new Map();
 	public userIdsWhoBlockingMe: Set<string> = new Set();
 	public userIdsWhoMeMutingRenotes: Set<string> = new Set();
 	public userMutedInstances: Set<string> = new Set();
@@ -86,6 +88,7 @@ export default class Connection {
 			followingChannels,
 			mutingChannels,
 			userIdsWhoMeMuting,
+			nonImageMutings,
 			userIdsWhoBlockingMe,
 			userIdsWhoMeMutingRenotes,
 		] = await Promise.all([
@@ -94,6 +97,7 @@ export default class Connection {
 			this.channelFollowingService.userFollowingChannelsCache.fetch(this.user.id),
 			this.channelMutingService.mutingChannelsCache.fetch(this.user.id),
 			this.cacheService.userMutingsCache.fetch(this.user.id),
+			this.cacheService.nonImageMutingsCache.fetch(this.user.id),
 			this.cacheService.userBlockedCache.fetch(this.user.id),
 			this.cacheService.renoteMutingsCache.fetch(this.user.id),
 		]);
@@ -102,6 +106,7 @@ export default class Connection {
 		this.followingChannels = followingChannels;
 		this.mutingChannels = mutingChannels;
 		this.userIdsWhoMeMuting = userIdsWhoMeMuting;
+		this.nonImageMutings = nonImageMutings;
 		this.userIdsWhoBlockingMe = userIdsWhoBlockingMe;
 		this.userIdsWhoMeMutingRenotes = userIdsWhoMeMutingRenotes;
 		this.userMutedInstances = new Set(userProfile.mutedInstances);

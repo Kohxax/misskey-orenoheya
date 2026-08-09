@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, ObjectLiteral } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { MiUser } from '@/models/User.js';
-import type { UserProfilesRepository, FollowingsRepository, ChannelFollowingsRepository, BlockingsRepository, NoteThreadMutingsRepository, MutingsRepository, RenoteMutingsRepository, MiMeta } from '@/models/_.js';
+import type { UserProfilesRepository, FollowingsRepository, ChannelFollowingsRepository, BlockingsRepository, NoteThreadMutingsRepository, MutingsRepository, NonImageMutingsRepository, RenoteMutingsRepository, MiMeta } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
 import type { SelectQueryBuilder } from 'typeorm';
@@ -32,6 +32,9 @@ export class QueryService {
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
+
+		@Inject(DI.nonImageMutingsRepository)
+		private nonImageMutingsRepository: NonImageMutingsRepository,
 
 		@Inject(DI.renoteMutingsRepository)
 		private renoteMutingsRepository: RenoteMutingsRepository,
@@ -244,6 +247,29 @@ export class QueryService {
 
 		q.setParameters(mutingQuery.getParameters());
 		q.setParameters(mutingInstanceQuery.getParameters());
+	}
+
+	@bindThis
+	public generateNonImageMutedUserQueryForNotes(q: SelectQueryBuilder<any>, me: { id: MiUser['id'] } | null): void {
+		if (!me) return;
+		const mutingQuery = this.nonImageMutingsRepository.createQueryBuilder('nonImageMuting')
+			.select('nonImageMuting.muteeId')
+			.where('nonImageMuting.muterId = :nonImageMuterId', { nonImageMuterId: me.id })
+			.andWhere('(nonImageMuting.expiresAt IS NULL OR nonImageMuting.expiresAt > :nonImageMuteNow)', { nonImageMuteNow: new Date() });
+
+		const hasImage = (column: string) => `EXISTS (SELECT 1 FROM unnest(${column}."attachedFileTypes") AS file_type WHERE file_type LIKE 'image/%')`;
+
+		q.andWhere(new Brackets(qb => {
+			qb.where(`note.userId NOT IN (${mutingQuery.getQuery()})`)
+				.orWhere(hasImage('note'));
+		}));
+		q.andWhere(new Brackets(qb => {
+			qb.where('renote.id IS NULL')
+				.orWhere('renote.userId = note.userId')
+				.orWhere(`renote.userId NOT IN (${mutingQuery.getQuery()})`)
+				.orWhere(hasImage('renote'));
+		}));
+		q.setParameters(mutingQuery.getParameters());
 	}
 
 	@bindThis

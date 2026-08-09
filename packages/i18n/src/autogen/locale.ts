@@ -601,6 +601,14 @@ export interface Locale extends ILocale {
      */
     "unmute": string;
     /**
+     * 画像以外をミュート
+     */
+    "nonImageMute": string;
+    /**
+     * 画像以外のミュートを解除
+     */
+    "nonImageUnmute": string;
+    /**
      * リノートをミュート
      */
     "renoteMute": string;
@@ -1004,6 +1012,10 @@ export interface Locale extends ILocale {
      * ミュートしたユーザー
      */
     "mutedUsers": string;
+    /**
+     * 画像以外をミュートしたユーザー
+     */
+    "nonImageMutedUsers": string;
     /**
      * ブロックしたユーザー
      */

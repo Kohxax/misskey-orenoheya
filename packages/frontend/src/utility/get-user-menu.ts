@@ -20,11 +20,37 @@ import { mainRouter } from '@/router.js';
 import { genEmbedCode } from '@/utility/get-embed-code.js';
 import { prefer } from '@/preferences.js';
 import { getPluginHandlers } from '@/plugin.js';
+import { suggestReload } from '@/utility/reload-suggest.js';
 
 export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router = mainRouter) {
 	const meId = $i ? $i.id : null;
 
 	const cleanups = [] as (() => void)[];
+
+	async function selectMuteExpiresAt(): Promise<number | null | undefined> {
+		const { canceled, result: period } = await os.select({
+			title: i18n.ts.mutePeriod,
+			items: [{
+				value: 'indefinitely', label: i18n.ts.indefinitely,
+			}, {
+				value: 'tenMinutes', label: i18n.ts.tenMinutes,
+			}, {
+				value: 'oneHour', label: i18n.ts.oneHour,
+			}, {
+				value: 'oneDay', label: i18n.ts.oneDay,
+			}, {
+				value: 'oneWeek', label: i18n.ts.oneWeek,
+			}],
+			default: 'indefinitely',
+		});
+		if (canceled) return undefined;
+		return period === 'indefinitely' ? null
+			: period === 'tenMinutes' ? Date.now() + (1000 * 60 * 10)
+			: period === 'oneHour' ? Date.now() + (1000 * 60 * 60)
+			: period === 'oneDay' ? Date.now() + (1000 * 60 * 60 * 24)
+			: period === 'oneWeek' ? Date.now() + (1000 * 60 * 60 * 24 * 7)
+			: null;
+	}
 
 	async function toggleMute() {
 		if (user.isMuted) {
@@ -32,39 +58,39 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 				userId: user.id,
 			}).then(() => {
 				user.isMuted = false;
+				suggestReload();
 			});
 		} else {
-			const { canceled, result: period } = await os.select({
-				title: i18n.ts.mutePeriod,
-				items: [{
-					value: 'indefinitely', label: i18n.ts.indefinitely,
-				}, {
-					value: 'tenMinutes', label: i18n.ts.tenMinutes,
-				}, {
-					value: 'oneHour', label: i18n.ts.oneHour,
-				}, {
-					value: 'oneDay', label: i18n.ts.oneDay,
-				}, {
-					value: 'oneWeek', label: i18n.ts.oneWeek,
-				}],
-				default: 'indefinitely',
-			});
-			if (canceled) return;
-
-			const expiresAt = period === 'indefinitely' ? null
-				: period === 'tenMinutes' ? Date.now() + (1000 * 60 * 10)
-				: period === 'oneHour' ? Date.now() + (1000 * 60 * 60)
-				: period === 'oneDay' ? Date.now() + (1000 * 60 * 60 * 24)
-				: period === 'oneWeek' ? Date.now() + (1000 * 60 * 60 * 24 * 7)
-				: null;
+			const expiresAt = await selectMuteExpiresAt();
+			if (expiresAt === undefined) return;
 
 			os.apiWithDialog('mute/create', {
 				userId: user.id,
 				expiresAt,
 			}).then(() => {
 				user.isMuted = true;
+				user.isNonImageMuted = false;
+				suggestReload();
 			});
 		}
+	}
+
+	async function toggleNonImageMute() {
+		if (user.isNonImageMuted) {
+			os.apiWithDialog('non-image-mute/delete', { userId: user.id }).then(() => {
+				user.isNonImageMuted = false;
+				suggestReload();
+			});
+			return;
+		}
+
+		const expiresAt = await selectMuteExpiresAt();
+		if (expiresAt === undefined) return;
+		os.apiWithDialog('non-image-mute/create', { userId: user.id, expiresAt }).then(() => {
+			user.isNonImageMuted = true;
+			user.isMuted = false;
+			suggestReload();
+		});
 	}
 
 	async function toggleRenoteMute() {
@@ -402,6 +428,10 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 			icon: user.isMuted ? 'ti ti-eye' : 'ti ti-eye-off',
 			text: user.isMuted ? i18n.ts.unmute : i18n.ts.mute,
 			action: toggleMute,
+		}, {
+			icon: user.isNonImageMuted ? 'ti ti-photo' : 'ti ti-photo-off',
+			text: user.isNonImageMuted ? i18n.ts.nonImageUnmute : i18n.ts.nonImageMute,
+			action: toggleNonImageMute,
 		}, {
 			icon: user.isRenoteMuted ? 'ti ti-repeat' : 'ti ti-repeat-off',
 			text: user.isRenoteMuted ? i18n.ts.renoteUnmute : i18n.ts.renoteMute,

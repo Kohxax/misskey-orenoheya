@@ -81,6 +81,7 @@ export class HomeTimelineChannel extends Channel {
 		}
 
 		if (this.isNoteMutedOrBlocked(note)) return;
+		if (this.isNoteNonImageMuted(note)) return;
 
 		const filtered = await this.noteStreamingHidingService.filter(note, this.user?.id ?? null);
 		if (!filtered) return;

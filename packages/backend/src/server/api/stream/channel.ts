@@ -12,6 +12,7 @@ import type { Awaitable } from '@/types.js';
 import type { Packed } from '@/misc/json-schema.js';
 import type { JsonObject, JsonValue } from '@/misc/json-value.js';
 import type Connection from './Connection.js';
+import { isNonImageMuted } from '@/misc/is-non-image-muted.js';
 
 /**
  * Stream channel
@@ -43,6 +44,10 @@ export default abstract class Channel {
 
 	protected get userIdsWhoMeMutingRenotes() {
 		return this.connection.userIdsWhoMeMutingRenotes;
+	}
+
+	protected isNoteNonImageMuted(note: Packed<'Note'>): boolean {
+		return isNonImageMuted(note, this.connection.nonImageMutings);
 	}
 
 	protected get userIdsWhoBlockingMe() {

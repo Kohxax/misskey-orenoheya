@@ -55,6 +55,7 @@ export class RoleTimelineChannel extends Channel {
 			if (note.reply && note.reply.user.requireSigninToViewContents && this.user == null) return;
 
 			if (this.isNoteMutedOrBlocked(note)) return;
+			if (this.isNoteNonImageMuted(note)) return;
 
 			const filtered = await this.noteStreamingHidingService.filter(note, this.user?.id ?? null);
 			if (!filtered) return;

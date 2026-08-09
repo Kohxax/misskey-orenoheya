@@ -45,6 +45,7 @@ export const DI = {
 	driveFoldersRepository: Symbol('driveFoldersRepository'),
 	metasRepository: Symbol('metasRepository'),
 	mutingsRepository: Symbol('mutingsRepository'),
+	nonImageMutingsRepository: Symbol('nonImageMutingsRepository'),
 	renoteMutingsRepository: Symbol('renoteMutingsRepository'),
 	blockingsRepository: Symbol('blockingsRepository'),
 	swSubscriptionsRepository: Symbol('swSubscriptionsRepository'),

@@ -137,6 +137,39 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</SearchMarker>
 
 			<SearchMarker
+				:label="i18n.ts.nonImageMutedUsers"
+				:keywords="['note', 'image', 'mute', 'hide', 'user']"
+			>
+				<MkFolder>
+					<template #icon><i class="ti ti-photo-off"></i></template>
+					<template #label>{{ i18n.ts.nonImageMutedUsers }}</template>
+
+					<MkPagination :paginator="nonImageMutingPaginator" withControl>
+						<template #empty><MkResult type="empty" :text="i18n.ts.noUsers"/></template>
+
+						<template #default="{ items }">
+							<div class="_gaps_s">
+								<div v-for="item in items" :key="item.mutee.id" :class="[$style.userItem, { [$style.userItemOpend]: expandedNonImageMuteItems.includes(item.id) }]">
+									<div :class="$style.userItemMain">
+										<MkA :class="$style.userItemMainBody" :to="userPage(item.mutee)">
+											<MkUserCardMini :user="item.mutee"/>
+										</MkA>
+										<button class="_button" :class="$style.userToggle" :aria-label="i18n.ts.details" :aria-expanded="expandedNonImageMuteItems.includes(item.id)" @click="toggleNonImageMuteItem(item)"><i :class="$style.chevron" class="ti ti-chevron-down" aria-hidden="true"></i></button>
+										<button class="_button" :class="$style.remove" :aria-label="i18n.ts.nonImageUnmute" @click="unmuteNonImage(item.mutee, $event)"><i class="ti ti-x" aria-hidden="true"></i></button>
+									</div>
+									<div v-if="expandedNonImageMuteItems.includes(item.id)" :class="$style.userItemSub">
+										<div>{{ i18n.ts.createdAt }}: <MkTime :time="item.createdAt" mode="detail"/></div>
+										<div v-if="item.expiresAt">{{ i18n.ts.period }}: {{ new Date(item.expiresAt).toLocaleString() }}</div>
+										<div v-else>{{ i18n.ts.period }}: {{ i18n.ts.indefinitely }}</div>
+									</div>
+								</div>
+							</div>
+						</template>
+					</MkPagination>
+				</MkFolder>
+			</SearchMarker>
+
+			<SearchMarker
 				:label="i18n.ts.blockedUsers"
 				:keywords="['block', 'user']"
 			>
@@ -203,12 +236,17 @@ const mutingPaginator = markRaw(new Paginator('mute/list', {
 	limit: 10,
 }));
 
+const nonImageMutingPaginator = markRaw(new Paginator('non-image-mute/list', {
+	limit: 10,
+}));
+
 const blockingPaginator = markRaw(new Paginator('blocking/list', {
 	limit: 10,
 }));
 
 const expandedRenoteMuteItems = ref<string[]>([]);
 const expandedMuteItems = ref<string[]>([]);
+const expandedNonImageMuteItems = ref<string[]>([]);
 const expandedBlockItems = ref<string[]>([]);
 
 const showSoftWordMutedWord = prefer.model('showSoftWordMutedWord');
@@ -241,6 +279,17 @@ async function unmute(user: Misskey.entities.UserDetailed, ev: PointerEvent) {
 	}], ev.currentTarget ?? ev.target);
 }
 
+async function unmuteNonImage(user: Misskey.entities.UserDetailed, ev: PointerEvent) {
+	os.popupMenu([{
+		text: i18n.ts.nonImageUnmute,
+		icon: 'ti ti-x',
+		action: async () => {
+			await os.apiWithDialog('non-image-mute/delete', { userId: user.id });
+			suggestReload();
+		},
+	}], ev.currentTarget ?? ev.target);
+}
+
 async function unblock(user: Misskey.entities.UserDetailed, ev: PointerEvent) {
 	os.popupMenu([{
 		text: i18n.ts.unblock,
@@ -265,6 +314,14 @@ async function toggleMuteItem(item: { id: string }) {
 		expandedMuteItems.value = expandedMuteItems.value.filter(x => x !== item.id);
 	} else {
 		expandedMuteItems.value.push(item.id);
+	}
+}
+
+async function toggleNonImageMuteItem(item: { id: string }) {
+	if (expandedNonImageMuteItems.value.includes(item.id)) {
+		expandedNonImageMuteItems.value = expandedNonImageMuteItems.value.filter(x => x !== item.id);
+	} else {
+		expandedNonImageMuteItems.value.push(item.id);
 	}
 }
 

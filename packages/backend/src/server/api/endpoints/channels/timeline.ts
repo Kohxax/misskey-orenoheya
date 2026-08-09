@@ -98,6 +98,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				limit: ps.limit,
 				allowPartial: ps.allowPartial,
 				me,
+				filterNonImageMutedNotes: true,
 				useDbFallback: true,
 				redisTimelines: [`channelTimeline:${channel.id}`],
 				excludePureRenotes: false,
@@ -126,6 +127,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			.leftJoinAndSelect('note.channel', 'channel');
 
 		this.queryService.generateBaseNoteFilteringQuery(query, me);
+		this.queryService.generateNonImageMutedUserQueryForNotes(query, me);
 
 		if (me) {
 			const mutingChannelIds = await this.channelMutingService

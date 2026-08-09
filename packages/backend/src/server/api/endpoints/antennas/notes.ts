@@ -97,8 +97,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				this.globalEventService.publishInternalEvent('antennaUpdated', antenna);
 			}
 
-			let noteIds = await this.fanoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);
-			noteIds = noteIds.slice(0, ps.limit);
+			const noteIds = await this.fanoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);
+			// Filtering before limiting prevents a page from appearing empty when its first candidates are muted.
 			if (noteIds.length === 0) {
 				return [];
 			}
@@ -131,6 +131,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			this.queryService.generateVisibilityQuery(query, me);
 			this.queryService.generateBaseNoteFilteringQuery(query, me);
+			this.queryService.generateNonImageMutedUserQueryForNotes(query, me);
 
 			const notes = await query.getMany();
 			if (sinceId != null && untilId == null) {
@@ -138,6 +139,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			} else {
 				notes.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
+			notes.splice(ps.limit);
 
 			return await this.noteEntityService.packMany(notes, me);
 		});

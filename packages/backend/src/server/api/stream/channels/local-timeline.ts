@@ -77,6 +77,7 @@ export class LocalTimelineChannel extends Channel {
 		if (isRenotePacked(note) && !isQuotePacked(note) && !this.withRenotes) return;
 
 		if (this.isNoteMutedOrBlocked(note)) return;
+		if (this.isNoteNonImageMuted(note)) return;
 
 		const filtered = await this.noteStreamingHidingService.filter(note, this.user?.id ?? null);
 		if (!filtered) return;

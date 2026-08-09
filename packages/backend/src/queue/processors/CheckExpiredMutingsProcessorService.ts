@@ -5,11 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { DI } from '@/di-symbols.js';
-import type { MutingsRepository } from '@/models/_.js';
+import type { MutingsRepository, NonImageMutingsRepository } from '@/models/_.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
 import { UserMutingService } from '@/core/UserMutingService.js';
 import { ChannelMutingService } from '@/core/ChannelMutingService.js';
+import { UserNonImageMutingService } from '@/core/UserNonImageMutingService.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
 
 @Injectable()
@@ -20,7 +21,11 @@ export class CheckExpiredMutingsProcessorService {
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
 
+		@Inject(DI.nonImageMutingsRepository)
+		private nonImageMutingsRepository: NonImageMutingsRepository,
+
 		private userMutingService: UserMutingService,
+		private userNonImageMutingService: UserNonImageMutingService,
 		private channelMutingService: ChannelMutingService,
 		private queueLoggerService: QueueLoggerService,
 	) {
@@ -40,6 +45,12 @@ export class CheckExpiredMutingsProcessorService {
 		if (expired.length > 0) {
 			await this.userMutingService.unmute(expired);
 		}
+
+		const expiredNonImageMutings = await this.nonImageMutingsRepository.createQueryBuilder('muting')
+			.where('muting.expiresAt IS NOT NULL')
+			.andWhere('muting.expiresAt < :now', { now: new Date() })
+			.getMany();
+		await this.userNonImageMutingService.unmute(expiredNonImageMutings);
 
 		await this.channelMutingService.eraseExpiredMutings();
 
