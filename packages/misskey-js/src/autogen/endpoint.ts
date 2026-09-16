@@ -665,6 +665,8 @@ import type {
 	V2AdminEmojiListRequest,
 	V2AdminEmojiListResponse,
 	VerifyEmailRequest,
+	XLikeRequest,
+	XUnlikeRequest,
 } from './entities.js';
 
 export type Endpoints = {
@@ -1106,6 +1108,12 @@ export type Endpoints = {
 	'users/update-memo': { req: UsersUpdateMemoRequest; res: EmptyResponse };
 	'v2/admin/emoji/list': { req: V2AdminEmojiListRequest; res: V2AdminEmojiListResponse };
 	'verify-email': { req: VerifyEmailRequest; res: EmptyResponse };
+	'x/for-you': { req: EmptyRequest; res: EmptyResponse };
+	'x/like': { req: XLikeRequest; res: EmptyResponse };
+	'x/liked': { req: EmptyRequest; res: EmptyResponse };
+	'x/status': { req: EmptyRequest; res: EmptyResponse };
+	'x/timeline': { req: EmptyRequest; res: EmptyResponse };
+	'x/unlike': { req: XUnlikeRequest; res: EmptyResponse };
 };
 
 /**

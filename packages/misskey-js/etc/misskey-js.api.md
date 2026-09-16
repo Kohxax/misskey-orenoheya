@@ -2199,6 +2199,8 @@ declare namespace entities {
         V2AdminEmojiListRequest,
         V2AdminEmojiListResponse,
         VerifyEmailRequest,
+        XLikeRequest,
+        XUnlikeRequest,
         Error_2 as Error,
         UserLite,
         UserDetailedNotMeOnly,
@@ -3767,6 +3769,12 @@ type V2AdminEmojiListResponse = operations['v2___admin___emoji___list']['respons
 
 // @public (undocumented)
 type VerifyEmailRequest = operations['verify-email']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type XLikeRequest = operations['x___like']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type XUnlikeRequest = operations['x___unlike']['requestBody']['content']['application/json'];
 
 // Warnings were encountered during analysis:
 //
