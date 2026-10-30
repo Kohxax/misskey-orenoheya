@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<!-- アバター列 + メイン列 -->
 	<div :class="$style.body">
 		<a :class="$style.avatarWrapper" :href="profileUrl" target="_blank" rel="noopener noreferrer">
-			<img :class="$style.avatar" :src="tweet.author.avatarUrl" :alt="tweet.author.name" loading="lazy"/>
+			<img :class="$style.avatar" referrerpolicy="no-referrer" :src="tweet.author.avatarUrl" :alt="tweet.author.name" loading="lazy"/>
 		</a>
 
 		<div :class="$style.main">
@@ -47,10 +47,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div v-if="tweet.media.length > 0" :class="[$style.mediaGrid, mediaGridClass]">
 				<template v-for="(item, i) in tweet.media" :key="item.url">
 					<button v-if="item.type === 'photo'" :class="$style.mediaItem" @click="openLightbox(photoIndexOf(i))">
-						<img :class="$style.mediaImage" :src="item.thumbUrl" loading="lazy"/>
+						<img :class="$style.mediaImage" referrerpolicy="no-referrer" :src="item.thumbUrl" loading="lazy"/>
 					</button>
 					<button v-else :class="[$style.mediaItem, $style.videoItem]" @click="openVideo(item)">
-						<img :class="$style.mediaImage" :src="item.thumbUrl" loading="lazy"/>
+						<img :class="$style.mediaImage" referrerpolicy="no-referrer" :src="item.thumbUrl" loading="lazy"/>
 						<div :class="$style.playOverlay">
 							<i :class="item.type === 'animated_gif' ? 'ti ti-repeat' : 'ti ti-player-play-filled'"></i>
 						</div>
@@ -188,6 +188,7 @@ async function openLightbox(photoIndex: number): Promise<void> {
 			const url = getLargeUrl(m.url);
 			const { width, height } = await new Promise<{ width: number; height: number }>(resolve => {
 				const img = new Image();
+				img.referrerPolicy = 'no-referrer';
 				img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
 				img.onerror = () => resolve({ width: 1200, height: 675 });
 				img.src = url;
@@ -197,6 +198,7 @@ async function openLightbox(photoIndex: number): Promise<void> {
 				type: 'image',
 				url,
 				thumbnailUrl: m.thumbUrl,
+				referrerPolicy: 'no-referrer',
 				width,
 				height,
 			};

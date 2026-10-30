@@ -48,6 +48,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						/>
 						<img
 							v-else-if="content.type === 'video' && content.thumbnailUrl != null"
+							:referrerpolicy="content.referrerPolicy"
 							:src="content.thumbnailUrl"
 							:class="$style.hiddenThumbnail"
 						/>
@@ -65,6 +66,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<img
 						v-if="(!originalContentLoaded || !thumbnailContentLoaded) && (content.thumbnailUrl != null)"
 						:class="[$style.content, $style.thumbnail]"
+						:referrerpolicy="content.referrerPolicy"
 						:src="content.thumbnailUrl"
 						draggable="false"
 						@load="thumbnailContentLoaded = true"
@@ -74,6 +76,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<img
 							v-if="content.type === 'image'"
 							:class="[$style.content, { [$style.pixelatedZoom]: pixelatedZoom }]"
+							:referrerpolicy="content.referrerPolicy"
 							:src="content.url"
 							:alt="content.file?.comment ?? undefined"
 							draggable="false"
@@ -163,6 +166,7 @@ export type Content = {
 	type: 'image' | 'video' | 'audio';
 	url: string;
 	thumbnailUrl?: string | null;
+	referrerPolicy?: ReferrerPolicy;
 	width?: number | null;
 	height?: number | null;
 	filename?: string | null;
